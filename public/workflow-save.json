@@ -1,49 +1,6 @@
 {
   "version": "1.0",
   "savedAt": "2026-03-30T00:00:00.000Z",
-  "nodes": [
-    {
-      "id": "1",
-      "type": "start-event",
-      "position": { "x": 80, "y": 200 },
-      "label": "Bắt đầu",
-      "routingCondition": "",
-      "branchConditions": {},
-      "fields": []
-    },
-    {
-      "id": "2",
-      "type": "activity",
-      "position": { "x": 380, "y": 200 },
-      "label": "Bước",
-      "routingCondition": "",
-      "branchConditions": {},
-      "fields": []
-    },
-    {
-      "id": "3",
-      "type": "end-event",
-      "position": { "x": 680, "y": 200 },
-      "label": "Kết thúc",
-      "routingCondition": "",
-      "branchConditions": {},
-      "fields": []
-    }
-  ],
-  "edges": [
-    {
-      "id": "e1-2",
-      "source": "1",
-      "target": "2",
-      "sourceHandle": null,
-      "targetHandle": null
-    },
-    {
-      "id": "e2-3",
-      "source": "2",
-      "target": "3",
-      "sourceHandle": null,
-      "targetHandle": null
-    }
-  ]
+  "nodes": [],
+  "edges": []
 }

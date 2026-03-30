@@ -1094,16 +1094,11 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
     onDelete:    (id) => deleteNodeRef.current(id)
   });
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNodeData>([
-    { id: "1", type: "start-event", position: { x: 80,  y: 200 }, data: makeNodeData("start-event") },
-    { id: "2", type: "activity",    position: { x: 380, y: 200 }, data: makeNodeData("activity")    },
-    { id: "3", type: "end-event",   position: { x: 680, y: 200 }, data: makeNodeData("end-event")   }
-  ]);
+  // Default: render workflow rỗng. Dữ liệu sẽ được hydrate từ `localStorage` (ưu tiên)
+  // hoặc từ `public/workflow-save.json` (nếu file tĩnh có nội dung).
+  const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNodeData>([]);
 
-  const [edges, setEdges, onEdgesChange] = useEdgesState([
-    { id: "e1-2", source: "1", target: "2", type: "deletable", data: { onDeleteEdge: (id: string) => deleteEdgeRef.current(id) } },
-    { id: "e2-3", source: "2", target: "3", type: "deletable", data: { onDeleteEdge: (id: string) => deleteEdgeRef.current(id) } }
-  ]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const [modal, setModal] = React.useState<ModalState>({
     isOpen: false,
@@ -1111,7 +1106,6 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
     nodeType: null,
     form: defaultFormData("activity")
   });
-  const [saveSuccess, setSaveSuccess] = React.useState(false);
 
   const flowRootRef = React.useRef<HTMLDivElement>(null);
   const graphStateRef = React.useRef({ nodes: [] as FlowNode<WorkflowNodeData>[], edges: [] as Edge[] });
@@ -1308,27 +1302,6 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
     setModal((p) => ({ ...p, isOpen: false }));
   };
 
-  const saveWorkflow = () => {
-    const payload = buildWorkflowPayloadV1(nodes, edges);
-    const json = JSON.stringify(payload, null, 2);
-    try {
-      localStorage.setItem(WORKFLOW_STORAGE_KEY, json);
-    } catch {
-      /* ignore quota / private mode */
-    }
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "workflow-save.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2500);
-  };
-
   // ── Type registries ──────────────────────────────────────────────────────
 
   const nodeTypes = React.useMemo(() => ({
@@ -1344,22 +1317,6 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
 
   return (
     <div className="flow-wrapper" ref={flowRootRef}>
-      {/* Toolbar */}
-      <div className="flow-toolbar">
-        <span className="flow-toolbar__brand">⚙ Workflow Builder</span>
-        <div className="flow-toolbar__hint">
-          Kéo icon từ sidebar vào lưới để tạo node · Double-click node để sửa form · Click mũi tên để xóa kết nối
-        </div>
-        <button
-          type="button"
-          title="Lưu vào trình duyệt và tải workflow-save.json (chép file vào thư mục public của project để load mặc định)"
-          className={`flow-toolbar__btn flow-toolbar__btn--export${saveSuccess ? " flow-toolbar__btn--success" : ""}`}
-          onClick={saveWorkflow}
-        >
-          {saveSuccess ? "✓ Đã lưu!" : "💾 Lưu"}
-        </button>
-      </div>
-
       <div className="flow-stage">
         <aside className="flow-sidebar">
           {SIDEBAR_NODE_ITEMS.map((item) => (
