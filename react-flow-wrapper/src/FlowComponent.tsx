@@ -127,6 +127,32 @@ type WorkflowPersistPayloadV1 = {
   }>;
 };
 
+function buildWorkflowPayloadV1(
+  nodeList: FlowNode<WorkflowNodeData>[],
+  edgeList: Edge[]
+): WorkflowPersistPayloadV1 {
+  return {
+    version: "1.0",
+    savedAt: new Date().toISOString(),
+    nodes: nodeList.map((n) => ({
+      id: n.id,
+      type: n.data.nodeType,
+      position: n.position,
+      label: n.data.formData.label,
+      routingCondition: n.data.formData.routingCondition ?? "",
+      branchConditions: n.data.formData.branchConditions ?? {},
+      fields: n.data.formData.fields
+    })),
+    edges: edgeList.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle ?? null,
+      targetHandle: e.targetHandle ?? null
+    }))
+  };
+}
+
 const SIDEBAR_NODE_ITEMS: { type: WorkflowNodeType; tooltip: string }[] = [
   {
     type: "start-event",
@@ -635,6 +661,9 @@ const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
     if (nodeType !== "condition" || !conditionSourceNodeId) return 0;
     return graphEdges.filter((e) => e.target === conditionSourceNodeId).length;
   }, [nodeType, conditionSourceNodeId, graphEdges]);
+
+  const [conditionModalTab, setConditionModalTab] = React.useState<"conditions" | "form">("conditions");
+
   const [localForm, setLocalForm] = React.useState<NodeFormData>(() => ({
     label: form.label,
     routingCondition: form.routingCondition ?? "",
@@ -771,6 +800,116 @@ const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
     setCanvasOver(false);
   };
 
+  const formBuilderBody = (
+    <div className="fb-body">
+      <div className="fb-palette">
+        <p className="fb-palette__heading">Các tùy chọn</p>
+        {PALETTE.map((meta) => (
+          <div
+            key={meta.type}
+            className="fb-palette__item"
+            draggable
+            onDragStart={(e) => handlePaletteDragStart(e, meta.type)}
+            onDragEnd={handleDragEnd}
+            title="Kéo thả để thêm vào Form"
+          >
+            <span className="fb-palette__icon">{meta.icon}</span>
+            <div className="fb-palette__info">
+              <span className="fb-palette__label">{meta.label}</span>
+              <span className="fb-palette__desc">{meta.desc}</span>
+            </div>
+          </div>
+        ))}
+        <div className="fb-palette__footer">Kéo thả để thêm vào Form</div>
+      </div>
+      <div className="fb-divider" />
+      <div
+        className={`fb-canvas${canvasOver ? " fb-canvas--over" : ""}`}
+        onDragOver={handleCanvasDragOver}
+        onDragLeave={handleCanvasDragLeave}
+        onDrop={handleCanvasDrop}
+      >
+        {localForm.fields.length === 0 ? (
+          <div className="fb-canvas__empty">
+            <span className="fb-canvas__empty-icon">⊕</span>
+            <p>Kéo trường từ bên trái và thả vào đây<br />để xây dựng form</p>
+          </div>
+        ) : (
+          <div className="fb-canvas__list">
+            {localForm.fields.map((field, idx) => (
+              <React.Fragment key={field.id}>
+                <div
+                  className={`fb-drop-line${dropIndex === idx && canvasOver ? " fb-drop-line--active" : ""}`}
+                />
+                <FieldRow
+                  field={field}
+                  index={idx}
+                  total={localForm.fields.length}
+                  onChange={updateField}
+                  onDelete={removeField}
+                  onMove={moveField}
+                  isDropTarget={dropIndex === idx && canvasOver}
+                  onDragOver={(e) => handleFieldRowDragOver(e, idx)}
+                  onDragStart={(e) => handleFieldDragStart(e, field.id)}
+                />
+              </React.Fragment>
+            ))}
+            <div
+              className={`fb-drop-line${dropIndex === localForm.fields.length && canvasOver ? " fb-drop-line--active" : ""}`}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const conditionRoutingPanel = (
+    <div className="fb-routing">
+      <p className="fb-routing__label">Điều kiện theo từng nhánh</p>
+      {conditionBranchTargets.length === 0 ? (
+        <>
+          <p className="fb-routing__empty">
+            Chưa có cạnh <strong>nối ra</strong> từ node điều kiện. Kéo từ <strong>hình thoi</strong> sang từng
+            node đích — mỗi node đích một ô điều kiện.
+          </p>
+          {conditionIncomingCount > 0 && (
+            <p className="fb-routing__hint fb-routing__hint--incoming">
+              Bạn đang có {conditionIncomingCount} cạnh <strong>vào</strong> node này; ô điều kiện chỉ tính theo
+              cạnh <strong>đi ra</strong> (từ node điều kiện tới bước sau). Hãy nối từ thoi sang node tiếp theo.
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="fb-routing__branches">
+          {conditionBranchTargets.map((t) => (
+            <div key={t.targetId} className="fb-routing__branch">
+              <label className="fb-routing__branch-label" htmlFor={`fb-branch-${t.targetId}`}>
+                → {t.targetLabel}
+                <span className="fb-routing__branch-id">({t.targetId})</span>
+              </label>
+              <textarea
+                id={`fb-branch-${t.targetId}`}
+                className="fb-routing__textarea"
+                rows={2}
+                value={localForm.branchConditions[t.targetId] ?? ""}
+                onChange={(e) =>
+                  setLocalForm((p) => ({
+                    ...p,
+                    branchConditions: { ...p.branchConditions, [t.targetId]: e.target.value }
+                  }))
+                }
+                placeholder="Điều kiện khi đi nhánh này..."
+              />
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="fb-routing__hint">
+        Số ô bằng số node đích được nối từ node điều kiện (mỗi đích một ô).
+      </p>
+    </div>
+  );
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -792,128 +931,59 @@ const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
           <button className="fb-header__close" onClick={onClose} title="Đóng">✕</button>
         </div>
 
-        {nodeType === "condition" && (
-          <div className="fb-routing">
-            <p className="fb-routing__label">Điều kiện theo từng nhánh</p>
-            {conditionBranchTargets.length === 0 ? (
-              <>
-                <p className="fb-routing__empty">
-                  Chưa có cạnh <strong>nối ra</strong> từ node điều kiện. Kéo từ <strong>hình thoi</strong> sang
-                  từng node đích — mỗi node đích một ô điều kiện.
-                </p>
-                {conditionIncomingCount > 0 && (
-                  <p className="fb-routing__hint fb-routing__hint--incoming">
-                    Bạn đang có {conditionIncomingCount} cạnh <strong>vào</strong> node này; ô điều kiện chỉ tính
-                    theo cạnh <strong>đi ra</strong> (từ node điều kiện tới bước sau). Hãy nối từ thoi sang node
-                    tiếp theo.
-                  </p>
-                )}
-              </>
-            ) : (
-              <div className="fb-routing__branches">
-                {conditionBranchTargets.map((t) => (
-                  <div key={t.targetId} className="fb-routing__branch">
-                    <label
-                      className="fb-routing__branch-label"
-                      htmlFor={`fb-branch-${t.targetId}`}
-                    >
-                      → {t.targetLabel}
-                      <span className="fb-routing__branch-id">({t.targetId})</span>
-                    </label>
-                    <textarea
-                      id={`fb-branch-${t.targetId}`}
-                      className="fb-routing__textarea"
-                      rows={2}
-                      value={localForm.branchConditions[t.targetId] ?? ""}
-                      onChange={(e) =>
-                        setLocalForm((p) => ({
-                          ...p,
-                          branchConditions: {
-                            ...p.branchConditions,
-                            [t.targetId]: e.target.value
-                          }
-                        }))
-                      }
-                      placeholder="Điều kiện khi đi nhánh này..."
-                    />
-                  </div>
-                ))}
+        <div
+          className={`fb-modal__scroll${nodeType === "condition" ? " fb-modal__scroll--tabs" : ""}`}
+        >
+          {nodeType === "condition" ? (
+            <>
+              <div className="fb-tabs" role="tablist" aria-label="Chỉnh sửa node điều kiện">
+                <button
+                  type="button"
+                  role="tab"
+                  id="fb-tab-conditions"
+                  aria-selected={conditionModalTab === "conditions"}
+                  aria-controls="fb-panel-conditions"
+                  className={`fb-tab${conditionModalTab === "conditions" ? " fb-tab--active" : ""}`}
+                  onClick={() => setConditionModalTab("conditions")}
+                >
+                  Điều kiện nhánh
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  id="fb-tab-form"
+                  aria-selected={conditionModalTab === "form"}
+                  aria-controls="fb-panel-form"
+                  className={`fb-tab${conditionModalTab === "form" ? " fb-tab--active" : ""}`}
+                  onClick={() => setConditionModalTab("form")}
+                >
+                  Form
+                </button>
               </div>
-            )}
-            <p className="fb-routing__hint">
-              Số ô bằng số node đích được nối từ node điều kiện (mỗi đích một ô).
-            </p>
-          </div>
-        )}
-
-        {/* Body */}
-        <div className="fb-body">
-
-          {/* Left: palette */}
-          <div className="fb-palette">
-            <p className="fb-palette__heading">Các tùy chọn</p>
-            {PALETTE.map((meta) => (
-              <div
-                key={meta.type}
-                className="fb-palette__item"
-                draggable
-                onDragStart={(e) => handlePaletteDragStart(e, meta.type)}
-                onDragEnd={handleDragEnd}
-                title="Kéo thả để thêm vào Form"
-              >
-                <span className="fb-palette__icon">{meta.icon}</span>
-                <div className="fb-palette__info">
-                  <span className="fb-palette__label">{meta.label}</span>
-                  <span className="fb-palette__desc">{meta.desc}</span>
-                </div>
-              </div>
-            ))}
-            <div className="fb-palette__footer">Kéo thả để thêm vào Form</div>
-          </div>
-
-          {/* Divider */}
-          <div className="fb-divider" />
-
-          {/* Right: canvas */}
-          <div
-            className={`fb-canvas${canvasOver ? " fb-canvas--over" : ""}`}
-            onDragOver={handleCanvasDragOver}
-            onDragLeave={handleCanvasDragLeave}
-            onDrop={handleCanvasDrop}
-          >
-            {localForm.fields.length === 0 ? (
-              <div className="fb-canvas__empty">
-                <span className="fb-canvas__empty-icon">⊕</span>
-                <p>Kéo trường từ bên trái và thả vào đây<br />để xây dựng form</p>
-              </div>
-            ) : (
-              <div className="fb-canvas__list">
-                {localForm.fields.map((field, idx) => (
-                  <React.Fragment key={field.id}>
-                    {/* Drop indicator line */}
-                    <div
-                      className={`fb-drop-line${dropIndex === idx && canvasOver ? " fb-drop-line--active" : ""}`}
-                    />
-                    <FieldRow
-                      field={field}
-                      index={idx}
-                      total={localForm.fields.length}
-                      onChange={updateField}
-                      onDelete={removeField}
-                      onMove={moveField}
-                      isDropTarget={dropIndex === idx && canvasOver}
-                      onDragOver={(e) => handleFieldRowDragOver(e, idx)}
-                      onDragStart={(e) => handleFieldDragStart(e, field.id)}
-                    />
-                  </React.Fragment>
-                ))}
-                {/* Drop indicator at end */}
+              {conditionModalTab === "conditions" && (
                 <div
-                  className={`fb-drop-line${dropIndex === localForm.fields.length && canvasOver ? " fb-drop-line--active" : ""}`}
-                />
-              </div>
-            )}
-          </div>
+                  className="fb-tab-panel fb-tab-panel--scroll"
+                  id="fb-panel-conditions"
+                  role="tabpanel"
+                  aria-labelledby="fb-tab-conditions"
+                >
+                  {conditionRoutingPanel}
+                </div>
+              )}
+              {conditionModalTab === "form" && (
+                <div
+                  className="fb-tab-panel fb-tab-panel--form"
+                  id="fb-panel-form"
+                  role="tabpanel"
+                  aria-labelledby="fb-tab-form"
+                >
+                  {formBuilderBody}
+                </div>
+              )}
+            </>
+          ) : (
+            formBuilderBody
+          )}
         </div>
 
         {/* Footer */}
@@ -1003,7 +1073,13 @@ const FlowCanvasInner: React.FC<FlowCanvasInnerProps> = ({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const FlowComponent: React.FC = () => {
+/** Props khi dùng qua web component (Angular: [attr.save-trigger], (workflowSaved)=...) */
+export type FlowWidgetProps = {
+  /** Mỗi lần tăng (0→1, 1→2…) sẽ lưu graph và bắn CustomEvent `workflowSaved` */
+  saveTrigger?: number;
+};
+
+const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
   const idRef = React.useRef(4);
   const configureNodeRef = React.useRef<(id: string) => void>(() => {});
   const duplicateNodeRef = React.useRef<(id: string) => void>(() => {});
@@ -1036,6 +1112,45 @@ const FlowComponent: React.FC = () => {
     form: defaultFormData("activity")
   });
   const [saveSuccess, setSaveSuccess] = React.useState(false);
+
+  const flowRootRef = React.useRef<HTMLDivElement>(null);
+  const graphStateRef = React.useRef({ nodes: [] as FlowNode<WorkflowNodeData>[], edges: [] as Edge[] });
+  graphStateRef.current = { nodes, edges };
+
+  const prevSaveTriggerRef = React.useRef<number | undefined>(undefined);
+
+  const emitWorkflowSaved = React.useCallback(
+    (payload: WorkflowPersistPayloadV1, json: string) => {
+      flowRootRef.current?.dispatchEvent(
+        new CustomEvent("workflowSaved", {
+          detail: { json, payload },
+          bubbles: true,
+          composed: true
+        })
+      );
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    if (saveTrigger === undefined) return;
+    if (prevSaveTriggerRef.current === undefined) {
+      prevSaveTriggerRef.current = saveTrigger;
+      return;
+    }
+    if (saveTrigger === prevSaveTriggerRef.current) return;
+    prevSaveTriggerRef.current = saveTrigger;
+
+    const { nodes: ns, edges: es } = graphStateRef.current;
+    const payload = buildWorkflowPayloadV1(ns, es);
+    const json = JSON.stringify(payload, null, 2);
+    try {
+      localStorage.setItem(WORKFLOW_STORAGE_KEY, json);
+    } catch {
+      /* ignore */
+    }
+    emitWorkflowSaved(payload, json);
+  }, [saveTrigger, emitWorkflowSaved]);
 
   // ── Operations ───────────────────────────────────────────────────────────
 
@@ -1194,26 +1309,7 @@ const FlowComponent: React.FC = () => {
   };
 
   const saveWorkflow = () => {
-    const payload: WorkflowPersistPayloadV1 = {
-      version: "1.0",
-      savedAt: new Date().toISOString(),
-      nodes: nodes.map((n) => ({
-        id: n.id,
-        type: n.data.nodeType,
-        position: n.position,
-        label: n.data.formData.label,
-        routingCondition: n.data.formData.routingCondition ?? "",
-        branchConditions: n.data.formData.branchConditions ?? {},
-        fields: n.data.formData.fields
-      })),
-      edges: edges.map((e) => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        sourceHandle: e.sourceHandle ?? null,
-        targetHandle: e.targetHandle ?? null
-      }))
-    };
+    const payload = buildWorkflowPayloadV1(nodes, edges);
     const json = JSON.stringify(payload, null, 2);
     try {
       localStorage.setItem(WORKFLOW_STORAGE_KEY, json);
@@ -1247,7 +1343,7 @@ const FlowComponent: React.FC = () => {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flow-wrapper">
+    <div className="flow-wrapper" ref={flowRootRef}>
       {/* Toolbar */}
       <div className="flow-toolbar">
         <span className="flow-toolbar__brand">⚙ Workflow Builder</span>
