@@ -164,7 +164,7 @@ const SIDEBAR_NODE_ITEMS: { type: WorkflowNodeType; tooltip: string }[] = [
   },
   {
     type: "condition",
-    tooltip: "Điều kiện (hình thoi) — mô tả nhánh IF / ELSE trong form"
+    tooltip: "Điều kiện — mô tả nhánh IF / ELSE trong form"
   },
   {
     type: "end-event",
@@ -869,8 +869,7 @@ const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
       {conditionBranchTargets.length === 0 ? (
         <>
           <p className="fb-routing__empty">
-            Chưa có cạnh <strong>nối ra</strong> từ node điều kiện. Kéo từ <strong>hình thoi</strong> sang từng
-            node đích — mỗi node đích một ô điều kiện.
+            Chưa có flow được nối ra từ node điều kiện.
           </p>
           {conditionIncomingCount > 0 && (
             <p className="fb-routing__hint fb-routing__hint--incoming">
