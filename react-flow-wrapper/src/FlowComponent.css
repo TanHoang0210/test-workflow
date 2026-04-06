@@ -771,6 +771,135 @@
   flex-direction: column;
 }
 
+.fb-tab-panel--config {
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+.fb-config-props {
+  padding: 12px 16px 14px;
+}
+
+.fb-config-props__head {
+  margin-bottom: 10px;
+}
+
+.fb-config-props__title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e40af;
+  letter-spacing: 0.02em;
+}
+
+.fb-config-props__desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.fb-config-props__desc code {
+  font-size: 10px;
+  padding: 1px 4px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  color: #0f172a;
+}
+
+.fb-config-props__empty {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.fb-config-props__table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.fb-config-props__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr 36px;
+  gap: 8px;
+  align-items: center;
+}
+
+.fb-config-props__row--header {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0 2px;
+}
+
+.fb-config-props__row--header span {
+  min-width: 0;
+}
+
+.fb-config-props__input {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.fb-config-props__input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.fb-config-props__input--key {
+  font-family: ui-monospace, monospace;
+}
+
+.fb-config-props__col-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.fb-config-props__remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.fb-config-props__remove:hover {
+  border-color: #fecaca;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.fb-config-props__add {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px dashed #93c5fd;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fb-config-props__add:hover {
+  background: #dbeafe;
+}
+
 /* Khi có tab: chỉ từng panel cuộn, không cuộn cả khối (footer luôn thấy) */
 .fb-modal__scroll--tabs {
   overflow: hidden;
