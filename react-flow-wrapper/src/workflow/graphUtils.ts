@@ -7,6 +7,7 @@ import type {
   WorkflowNodeType,
   WorkflowPersistPayloadV1
 } from "./types";
+import { NODE_TYPE_LABELS } from "./constants";
 import { uid } from "./uid";
 
 function normalizeConfigProperties(
@@ -70,6 +71,54 @@ export function getOutgoingBranchTargets(
     });
   }
   return out;
+}
+
+export type ConnectableTargetSummary = {
+  id: string;
+  label: string;
+  typeLabel: string;
+  nodeType: WorkflowNodeType;
+  alreadyLinked: boolean;
+};
+
+/** Node đích có handle target (không phải Bắt đầu). */
+export function nodeAcceptsIncomingEdges(nodeType: WorkflowNodeType): boolean {
+  return nodeType !== "start-event";
+}
+
+/** Node nguồn có handle source (không phải Kết thúc). */
+export function nodeCanEmitOutgoingEdges(nodeType: WorkflowNodeType): boolean {
+  return nodeType !== "end-event";
+}
+
+/** Các node có thể nối từ `sourceId` (theo handle hiện có trên canvas). */
+export function getConnectableTargetSummaries(
+  sourceId: string,
+  nodeList: FlowNode<WorkflowNodeData>[],
+  edgeList: Edge[]
+): { canConnectOut: boolean; targets: ConnectableTargetSummary[] } {
+  const source = nodeList.find((n) => n.id === sourceId);
+  if (!source?.type || !isWorkflowNodeTypeString(source.type)) {
+    return { canConnectOut: false, targets: [] };
+  }
+  if (!nodeCanEmitOutgoingEdges(source.type)) {
+    return { canConnectOut: false, targets: [] };
+  }
+  const targets: ConnectableTargetSummary[] = [];
+  for (const n of nodeList) {
+    if (n.id === sourceId || !n.type || !isWorkflowNodeTypeString(n.type)) continue;
+    if (!nodeAcceptsIncomingEdges(n.type)) continue;
+    const nt = n.type;
+    targets.push({
+      id: n.id,
+      label: n.data.formData.label.trim() || `Node ${n.id}`,
+      typeLabel: NODE_TYPE_LABELS[nt],
+      nodeType: nt,
+      alreadyLinked: edgeList.some((e) => e.source === sourceId && e.target === n.id)
+    });
+  }
+  targets.sort((a, b) => a.label.localeCompare(b.label, "vi"));
+  return { canConnectOut: true, targets };
 }
 
 export function mergeBranchFormData(form: NodeFormData, targetIds: string[]): NodeFormData {

@@ -9,11 +9,13 @@ import ReactFlow, {
   type NodeProps,
   type OnEdgesChange,
   type OnNodesChange,
+  type OnSelectionChangeFunc,
   type XYPosition
 } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
 import type { WorkflowNodeData, WorkflowNodeType } from "../workflow/types";
 import { WORKFLOW_NODE_DRAG_MIME } from "../workflow/constants";
+import { NodeConnectionHints } from "./NodeConnectionHints";
 
 export type WorkflowFlowCanvasProps = {
   nodes: FlowNode<WorkflowNodeData>[];
@@ -24,6 +26,8 @@ export type WorkflowFlowCanvasProps = {
   nodeTypes: Record<string, React.ComponentType<NodeProps>>;
   edgeTypes: Record<string, React.ComponentType<EdgeProps>>;
   onDropNodeType: (type: WorkflowNodeType, position: XYPosition) => void;
+  onAppendConnected?: (sourceId: string, type: WorkflowNodeType) => void;
+  onNodeDragStart?: () => void;
 };
 
 export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
@@ -34,9 +38,27 @@ export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
   onConnect,
   nodeTypes,
   edgeTypes,
-  onDropNodeType
+  onDropNodeType,
+  onAppendConnected,
+  onNodeDragStart
 }) => {
   const { screenToFlowPosition } = useReactFlow();
+  const hostRef = React.useRef<HTMLDivElement>(null);
+  const [selectedHintId, setSelectedHintId] = React.useState<string | null>(null);
+
+  const onSelectionChange = React.useCallback<OnSelectionChangeFunc>(({ nodes: sel }) => {
+    setSelectedHintId(sel.length === 1 ? sel[0].id : null);
+  }, []);
+
+  const nodesForFlow = React.useMemo(() => {
+    if (!selectedHintId) return nodes;
+    return nodes.map((n) => {
+      if (n.id !== selectedHintId) return n;
+      const nextClass = [n.className, "wf-hint--picked"].filter(Boolean).join(" ").trim();
+      if (nextClass === (n.className ?? "").trim()) return n;
+      return { ...n, className: nextClass };
+    });
+  }, [nodes, selectedHintId]);
 
   const handleDragOver = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -63,21 +85,31 @@ export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
   );
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      deleteKeyCode={null}
-      fitView
-    >
-      <Background gap={20} size={1} color="#e2e8f0" />
-      <Controls />
-    </ReactFlow>
+    <div className="workflow-canvas-host" ref={hostRef}>
+      <ReactFlow
+        nodes={nodesForFlow}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onSelectionChange={onSelectionChange}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodeDragStart={onNodeDragStart}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        deleteKeyCode={null}
+        fitView
+      >
+        <Background gap={20} size={1} color="#e2e8f0" />
+        <Controls />
+        <NodeConnectionHints
+          containerRef={hostRef}
+          selectedNodeId={selectedHintId}
+          nodes={nodes}
+          onAppendConnected={onAppendConnected}
+        />
+      </ReactFlow>
+    </div>
   );
 };
