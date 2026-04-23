@@ -30,11 +30,9 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   private onWorkflowSaved = (event: CustomEvent) => {
-    this.zone.run(() => {
-      const { payload } = event.detail;
-      console.log('Workflow saved:', payload);
-      this.saveStatus.set('saved');
-      setTimeout(() => this.saveStatus.set('idle'), 2000);
-    });
+    const { payload } = event.detail;
+    console.log('Workflow saved:', payload);
+    this.saveStatus.set('saved');
+    setTimeout(() => this.saveStatus.set('idle'), 2000);
   };
 }
