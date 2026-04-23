@@ -1,1 +1,13 @@
-<react-flow-builder></react-flow-builder>
+<div class="flow-container">
+  <react-flow-builder
+    #flowBuilder
+  ></react-flow-builder>
+  <button
+    class="save-btn"
+    [class.saving]="saveStatus() === 'saving'"
+    [class.saved]="saveStatus() === 'saved'"
+    (click)="save()"
+  >
+    {{ saveStatus() === 'saving' ? 'Đang lưu...' : saveStatus() === 'saved' ? '✓ Đã lưu' : 'Lưu' }}
+  </button>
+</div>

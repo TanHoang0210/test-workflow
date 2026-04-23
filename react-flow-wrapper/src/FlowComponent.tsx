@@ -38,9 +38,9 @@ import { WorkflowFlowCanvas } from "./components/WorkflowFlowCanvas";
 import { WorkflowNodeView } from "./components/WorkflowNodeView";
 import { WorkflowSidebar } from "./components/WorkflowSidebar";
 
-/** Props khi dùng qua web component (Angular: [attr.save-trigger], (workflowSaved)=...) */
+/** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
 export type FlowWidgetProps = {
-  saveTrigger?: number;
+  saveTrigger?: number; // legacy — prefer dispatching "requestSave" event on the element
 };
 
 const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
@@ -135,6 +135,27 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
     }
     emitWorkflowSaved(payload, json);
   }, [saveTrigger, emitWorkflowSaved]);
+
+  React.useEffect(() => {
+    const root = flowRootRef.current;
+    if (!root) return;
+    // requestSave is dispatched on the host element (<react-flow-builder>), not on this
+    // inner div — events bubble up, not down, so we must listen on the host.
+    const rootNode = root.getRootNode();
+    const host: EventTarget =
+      rootNode instanceof ShadowRoot
+        ? rootNode.host
+        : (root.closest("react-flow-builder") ?? root);
+    const handler = () => {
+      const { nodes: ns, edges: es } = graphStateRef.current;
+      const payload = buildWorkflowPayloadV1(ns, es);
+      const json = JSON.stringify(payload, null, 2);
+      try { localStorage.setItem(WORKFLOW_STORAGE_KEY, json); } catch { /* ignore */ }
+      emitWorkflowSaved(payload, json);
+    };
+    host.addEventListener("requestSave", handler);
+    return () => host.removeEventListener("requestSave", handler);
+  }, [emitWorkflowSaved]);
 
   const openConfigModal = React.useCallback(
     (nodeId: string) => {
