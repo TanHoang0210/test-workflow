@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(npx ng *)",
+      "Bash(Get-ChildItem -Path \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\" -Recurse -Force)",
+      "Bash(Select-Object -First 100)",
+      "Bash(Format-Table FullName, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\" -Force | Format-Table Name, @{Label=\"Type\"; Expression={if \\($_.PSIsContainer\\) { \"Folder\" } else { \"File\" }}})",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\src\" -Recurse -Force | Where-Object {$_.PSIsContainer} | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\\", \"\"\\) })",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\" | Format-Table Name, @{Label=\"Type\"; Expression={if \\($_.PSIsContainer\\) { \"Folder\" } else { \"File\" }}})",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\src\\\\app\" -Recurse | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\src\\\\app\\\\\", \"\"\\) } | Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\src\" -Recurse -Force | Where-Object {!$_.PSIsContainer} | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\src\\\\\", \"src/\"\\) } | Sort-Object)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const a = require\\('./node_modules/@anthropic-ai/sdk/package.json'\\); console.log\\(a.version\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d['projects']['workflow-builder']['architect']['serve'], indent=2\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); srv=d['projects']['workflow-builder']['architect']['serve']; print\\(json.dumps\\(srv, indent=2\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./angular.json'\\); const srv=d.projects['workflow-builder'].architect.serve; console.log\\(JSON.stringify\\(srv,null,2\\)\\);\")",
+      "Bash(node -e \"const d=require\\('./angular.json'\\); const bld=d.projects['workflow-builder'].architect.build; console.log\\(JSON.stringify\\(bld,null,2\\)\\);\")",
+      "Bash(findstr vuesax *)",
+      "Bash(copy \"dist\\\\react-flow.iife.js\" \"..\\\\public\\\\react-flow.js\")",
+      "Bash(copy \"dist\\\\workflow-builder-widget.css\" \"..\\\\public\\\\react-flow-wrapper.css\")",
+      "PowerShell(Copy-Item \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\dist\\\\react-flow.iife.js\" \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\public\\\\react-flow.js\" -Force)",
+      "PowerShell(Copy-Item \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\dist\\\\workflow-builder-widget.css\" \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\public\\\\react-flow-wrapper.css\" -Force)"
+    ]
+  }
+}

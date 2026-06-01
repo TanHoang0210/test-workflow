@@ -40,7 +40,6 @@ import { WorkflowFlowCanvas } from "./components/WorkflowFlowCanvas";
 import { WorkflowNodeView } from "./components/WorkflowNodeView";
 import { WorkflowSidebar } from "./components/WorkflowSidebar";
 import { AIAssistantPanel } from "./components/AIAssistantPanel";
-import { mockAIService } from "./services/mockAIService";
 
 /** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
 export type FlowWidgetProps = {
@@ -81,7 +80,7 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
 
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [isLoadingWorkflow, setIsLoadingWorkflow] = React.useState(false);
+  const [_isLoadingWorkflow, setIsLoadingWorkflow] = React.useState(false);
 
   const history = useGraphHistory();
 
@@ -611,62 +610,36 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
       <AIAssistantPanel
         isOpen={isAIPanelOpen}
         onClose={() => setIsAIPanelOpen(false)}
-        isProcessing={isLoadingWorkflow}
-        onSendMessage={async (message, files) => {
+        onWorkflowGenerated={(workflow) => {
+          const ns = hydrateWorkflowNodes(workflow.nodes, makeNodeData);
+          const es = hydrateWorkflowEdges(workflow.edges, deleteEdgeRef.current);
+
+          setNodes([]);
+          setEdges([]);
           setIsLoadingWorkflow(true);
-          let response;
 
-          if (files.length > 0) {
-            // Process file
-            response = await mockAIService.processDocument(files[0], message);
-          } else {
-            // Just send message
-            response = await mockAIService.sendMessage(message);
-          }
-
-          // Load workflow if AI generated one
-          if (response.workflow) {
-            const ns = hydrateWorkflowNodes(response.workflow.nodes, makeNodeData);
-            const es = hydrateWorkflowEdges(response.workflow.edges, deleteEdgeRef.current);
-
-            // Animate nodes in sequentially
-            setNodes([]);
-            setEdges([]);
-
-            await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause before animation starts
-
-            // Add nodes one by one with animation
-            ns.forEach((node, index) => {
-              setTimeout(() => {
-                const animatedNode = {
-                  ...node,
-                  data: {
-                    ...node.data,
-                    isAnimating: true
-                  }
-                };
-                setNodes((prev) => [...prev, animatedNode]);
-
-                // Remove animation flag after animation completes
-                setTimeout(() => {
-                  setNodes((prev) =>
-                    prev.map((n) =>
-                      n.id === node.id ? { ...n, data: { ...n.data, isAnimating: false } } : n
-                    )
-                  );
-                }, 600);
-              }, index * 150); // Stagger each node by 150ms
-            });
-
-            // Add edges after nodes are mostly loaded
+          // Animate nodes in sequentially
+          ns.forEach((node, index) => {
             setTimeout(() => {
-              setEdges(es);
-              idRef.current = computeNextNodeIdFromPersisted(response.workflow!.nodes);
-              setIsLoadingWorkflow(false);
-            }, ns.length * 150 + 400);
-          } else {
+              setNodes((prev) => [
+                ...prev,
+                { ...node, data: { ...node.data, isAnimating: true } },
+              ]);
+              setTimeout(() => {
+                setNodes((prev) =>
+                  prev.map((n) =>
+                    n.id === node.id ? { ...n, data: { ...n.data, isAnimating: false } } : n
+                  )
+                );
+              }, 600);
+            }, index * 150);
+          });
+
+          setTimeout(() => {
+            setEdges(es);
+            idRef.current = computeNextNodeIdFromPersisted(workflow.nodes);
             setIsLoadingWorkflow(false);
-          }
+          }, ns.length * 150 + 400);
         }}
       />
     </div>
