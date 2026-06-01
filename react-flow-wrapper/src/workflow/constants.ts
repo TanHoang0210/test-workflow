@@ -16,10 +16,10 @@ export const PALETTE_MAP = Object.fromEntries(PALETTE.map((p) => [p.type, p])) a
 export const HAS_OPTIONS: FieldType[] = ["select", "radio", "checklist"];
 
 export const NODE_TYPE_LABELS: Record<WorkflowNodeType, string> = {
-  "start-event": "Bắt đầu",
-  activity: "Hoạt động",
-  condition: "Điều kiện",
-  "end-event": "Kết thúc"
+  "start-event": "Start",
+  activity: "Task",
+  condition: "Condition",
+  "end-event": "End"
 };
 
 export const WORKFLOW_NODE_DRAG_MIME = "text/workflow-node-type";
@@ -30,18 +30,18 @@ export const WORKFLOW_PUBLIC_JSON = "/workflow-save.json";
 export const SIDEBAR_NODE_ITEMS: { type: WorkflowNodeType; tooltip: string }[] = [
   {
     type: "start-event",
-    tooltip: "Bắt đầu — kéo thả vào lưới để tạo node, hoặc click để thêm nhanh"
+    tooltip: "Start — drag to canvas or click to add"
   },
   {
     type: "activity",
-    tooltip: "Hoạt động — kéo thả vào lưới hoặc click để thêm nhanh"
+    tooltip: "Task — drag to canvas or click to add"
   },
   {
     type: "condition",
-    tooltip: "Điều kiện — kéo thả vào lưới hoặc click để thêm nhanh"
+    tooltip: "Condition — drag to canvas or click to add"
   },
   {
     type: "end-event",
-    tooltip: "Kết thúc — kéo thả vào lưới hoặc click để thêm nhanh"
+    tooltip: "End — drag to canvas or click to add"
   }
 ];
