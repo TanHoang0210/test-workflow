@@ -13,7 +13,11 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
-const groq = new Groq({ apiKey: process.env['GROQ_API_KEY'] });
+let _groq: Groq | null = null;
+const getGroq = () => {
+  if (!_groq) _groq = new Groq({ apiKey: process.env['GROQ_API_KEY'] });
+  return _groq;
+};
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 const WORKFLOW_SYSTEM_PROMPT = `You are an AI assistant embedded in a visual workflow builder application.
@@ -107,7 +111,7 @@ app.post('/api/claude/chat', async (req, res) => {
 
     messages.push({ role: 'user', content: userText });
 
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroq().chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages,
       max_tokens: 8000,
