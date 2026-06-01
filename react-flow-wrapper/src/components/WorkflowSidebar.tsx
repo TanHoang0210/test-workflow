@@ -13,7 +13,7 @@ export const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ onAddNode }) =
       <button
         key={item.type}
         type="button"
-        className={`flow-sidebar__icon-btn flow-sidebar__icon-btn--${item.type} nodrag nopan`}
+        className={`flow-sidebar__item flow-sidebar__item--${item.type} nodrag nopan`}
         title={item.tooltip}
         draggable
         onDragStart={(e) => {
@@ -23,8 +23,10 @@ export const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ onAddNode }) =
         }}
         onClick={() => onAddNode(item.type)}
       >
-        <NodeTypeGlyph nodeType={item.type} className="flow-sidebar__glyph" />
-        <span className="sr-only">{NODE_TYPE_LABELS[item.type]}</span>
+        <div className="flow-sidebar__item-icon">
+          <NodeTypeGlyph nodeType={item.type} className="flow-sidebar__glyph" />
+        </div>
+        <span className="flow-sidebar__item-label">{NODE_TYPE_LABELS[item.type]}</span>
       </button>
     ))}
   </aside>

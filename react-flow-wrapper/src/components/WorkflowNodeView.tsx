@@ -73,22 +73,16 @@ export const WorkflowNodeView: React.FC<NodeProps<WorkflowNodeData>> = ({ id, da
     </div>
   );
 
-  const coreRow = (
-    <div className={`workflow-node__row${isCondition ? " workflow-node__row--in-diamond" : ""}`}>
-      {!isCondition && (
-        <span className={`workflow-node__icon-wrap workflow-node__icon-wrap--${data.nodeType}`}>
-          <NodeTypeGlyph nodeType={data.nodeType} />
-          <span className="sr-only">{NODE_TYPE_LABELS[data.nodeType]}</span>
-        </span>
-      )}
-      <p className="workflow-node__title">{formData.label}</p>
-    </div>
-  );
-
   if (isCondition) {
+    const coreRow = (
+      <div className="workflow-node__row workflow-node__row--in-diamond">
+        <p className="workflow-node__title">{formData.label}</p>
+      </div>
+    );
+
     return (
       <div
-        className="workflow-node workflow-node--condition"
+        className={`workflow-node workflow-node--condition ${data.isAnimating ? "workflow-node--animating" : ""}`}
         title={tip}
         onDoubleClick={(e) => {
           e.stopPropagation();
@@ -109,7 +103,7 @@ export const WorkflowNodeView: React.FC<NodeProps<WorkflowNodeData>> = ({ id, da
 
   return (
     <div
-      className={`workflow-node workflow-node--${data.nodeType}`}
+      className={`workflow-node workflow-node--${data.nodeType} ${data.isAnimating ? "workflow-node--animating" : ""}`}
       title={tip}
       onDoubleClick={(e) => {
         e.stopPropagation();
@@ -118,7 +112,17 @@ export const WorkflowNodeView: React.FC<NodeProps<WorkflowNodeData>> = ({ id, da
     >
       {toolbar}
       {!isStart && <Handle type="target" position={Position.Left} className="workflow-node__handle" />}
-      {coreRow}
+      <div className="workflow-node__header">
+        <div className="workflow-node__header-icon">
+          <NodeTypeGlyph nodeType={data.nodeType} />
+        </div>
+        <span className="workflow-node__type-label">{NODE_TYPE_LABELS[data.nodeType]}</span>
+      </div>
+      <div className="workflow-node__body">
+        <div className="workflow-node__content">
+          <p className="workflow-node__title">{formData.label}</p>
+        </div>
+      </div>
       {!isEnd && <Handle type="source" position={Position.Right} className="workflow-node__handle" />}
     </div>
   );

@@ -37,6 +37,7 @@ export type WorkflowNodeData = {
   onConfigure: (nodeId: string) => void;
   onDuplicate: (nodeId: string) => void;
   onDelete: (nodeId: string) => void;
+  isAnimating?: boolean;
 };
 
 export type ModalState = {

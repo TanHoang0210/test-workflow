@@ -11,6 +11,8 @@ import {
   type XYPosition
 } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
+import { ArrowRotateLeft, ArrowRotateRight, Setting } from "vuesax-icons-react";
+import wflogo from "../public/wflogo.png";
 import "reactflow/dist/style.css";
 import "./FlowComponent.css";
 
@@ -37,29 +39,49 @@ import { FormBuilderModal } from "./components/FormBuilderModal";
 import { WorkflowFlowCanvas } from "./components/WorkflowFlowCanvas";
 import { WorkflowNodeView } from "./components/WorkflowNodeView";
 import { WorkflowSidebar } from "./components/WorkflowSidebar";
+import { AIAssistantPanel } from "./components/AIAssistantPanel";
+import { mockAIService } from "./services/mockAIService";
 
 /** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
 export type FlowWidgetProps = {
   saveTrigger?: number; // legacy — prefer dispatching "requestSave" event on the element
+  showHeader?: boolean; // show/hide header with controls
+  onSave?: () => void; // custom save handler
+  onImport?: () => void; // custom import handler
+  onExport?: () => void; // custom export handler
+  onUndo?: () => void; // custom undo handler
+  onRedo?: () => void; // custom redo handler
 };
 
-const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
+const FlowComponent: React.FC<FlowWidgetProps> = ({
+  saveTrigger,
+  showHeader = true,
+  onSave: customOnSave,
+  onImport: customOnImport,
+  onExport: customOnExport,
+  onUndo: customOnUndo,
+  onRedo: customOnRedo
+}) => {
   const idRef = React.useRef(4);
   const configureNodeRef = React.useRef<(id: string) => void>(() => {});
   const duplicateNodeRef = React.useRef<(id: string) => void>(() => {});
   const deleteNodeRef = React.useRef<(id: string) => void>(() => {});
   const deleteEdgeRef = React.useRef<(id: string) => void>(() => {});
 
-  const makeNodeData = (type: WorkflowNodeType): WorkflowNodeData => ({
-    nodeType: type,
-    formData: defaultFormData(type),
-    onConfigure: (id) => configureNodeRef.current(id),
-    onDuplicate: (id) => duplicateNodeRef.current(id),
-    onDelete: (id) => deleteNodeRef.current(id)
-  });
+  const makeNodeData = React.useCallback(
+    (type: WorkflowNodeType): WorkflowNodeData => ({
+      nodeType: type,
+      formData: defaultFormData(type),
+      onConfigure: (id) => configureNodeRef.current(id),
+      onDuplicate: (id) => duplicateNodeRef.current(id),
+      onDelete: (id) => deleteNodeRef.current(id)
+    }),
+    []
+  );
 
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [isLoadingWorkflow, setIsLoadingWorkflow] = React.useState(false);
 
   const history = useGraphHistory();
 
@@ -96,6 +118,8 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
     nodeType: null,
     form: defaultFormData("activity")
   });
+
+  const [isAIPanelOpen, setIsAIPanelOpen] = React.useState(false);
 
   const flowRootRef = React.useRef<HTMLDivElement>(null);
   const graphStateRef = React.useRef({ nodes: [] as FlowNode<WorkflowNodeData>[], edges: [] as Edge[] });
@@ -375,20 +399,28 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
   }, []);
 
   const handleUndo = React.useCallback(() => {
+    if (customOnUndo) {
+      customOnUndo();
+      return;
+    }
     const cur = graphStateRef.current;
     const restored = history.undo({ nodes: cur.nodes, edges: cur.edges });
     if (!restored) return;
     setNodes(reattachCallbacks(restored.nodes));
     setEdges(reattachEdgeCallbacks(restored.edges));
-  }, [history, setNodes, setEdges, reattachCallbacks, reattachEdgeCallbacks]);
+  }, [customOnUndo, history, setNodes, setEdges, reattachCallbacks, reattachEdgeCallbacks]);
 
   const handleRedo = React.useCallback(() => {
+    if (customOnRedo) {
+      customOnRedo();
+      return;
+    }
     const cur = graphStateRef.current;
     const restored = history.redo({ nodes: cur.nodes, edges: cur.edges });
     if (!restored) return;
     setNodes(reattachCallbacks(restored.nodes));
     setEdges(reattachEdgeCallbacks(restored.edges));
-  }, [history, setNodes, setEdges, reattachCallbacks, reattachEdgeCallbacks]);
+  }, [customOnRedo, history, setNodes, setEdges, reattachCallbacks, reattachEdgeCallbacks]);
 
   React.useEffect(() => {
     const root = flowRootRef.current;
@@ -430,8 +462,119 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
 
   const edgeTypes = React.useMemo(() => ({ deletable: DeletableEdge }), []);
 
+  const handleExport = () => {
+    if (customOnExport) {
+      customOnExport();
+      return;
+    }
+    const { nodes: ns, edges: es } = graphStateRef.current;
+    const payload = buildWorkflowPayloadV1(ns, es);
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "workflow.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = React.useCallback(() => {
+    if (customOnImport) {
+      customOnImport();
+      return;
+    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const json = event.target?.result as string;
+          const payload = parseWorkflowPayload(json);
+          if (!payload) throw new Error("Invalid payload");
+          const ns = hydrateWorkflowNodes(payload.nodes, makeNodeData);
+          const es = hydrateWorkflowEdges(payload.edges, deleteEdgeRef.current);
+          setNodes(ns);
+          setEdges(es);
+          idRef.current = computeNextNodeIdFromPersisted(payload.nodes);
+        } catch (err) {
+          console.error("Failed to import workflow:", err);
+          alert("Invalid workflow file");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, [customOnImport, makeNodeData, setNodes, setEdges]);
+
+  const handleSave = () => {
+    if (customOnSave) {
+      customOnSave();
+      return;
+    }
+    const { nodes: ns, edges: es } = graphStateRef.current;
+    const payload = buildWorkflowPayloadV1(ns, es);
+    const json = JSON.stringify(payload, null, 2);
+    try {
+      localStorage.setItem(WORKFLOW_STORAGE_KEY, json);
+      alert("Workflow saved successfully!");
+    } catch {
+      alert("Failed to save workflow");
+    }
+    emitWorkflowSaved(payload, json);
+  };
+
   return (
     <div className="flow-wrapper" ref={flowRootRef} tabIndex={-1}>
+      {showHeader && (
+        <div className="flow-header">
+          <div className="flow-header__left">
+            <div className="flow-header__logo">
+              <img src={wflogo} alt="Logo" className="flow-header__logo-img" />
+            </div>
+            {/* <div className="flow-header__menu">
+              <button className="flow-header__menu-item">File</button>
+              <button className="flow-header__menu-item">Edit</button>
+              <button className="flow-header__menu-item">View</button>
+              <button className="flow-header__menu-item">Assets</button>
+            </div> */}
+          </div>
+          <div className="flow-header__center">
+            <button className="flow-header__icon-btn" title="Undo (Ctrl+Z)" onClick={handleUndo}>
+              <ArrowRotateLeft size={16} />
+            </button>
+            <button className="flow-header__icon-btn" title="Redo (Ctrl+Shift+Z)" onClick={handleRedo}>
+              <ArrowRotateRight size={16} />
+            </button>
+            <div className="flow-header__separator"></div>
+            <button
+              className="flow-header__icon-btn flow-header__icon-btn--accent"
+              title="Magic (AI)"
+              onClick={() => setIsAIPanelOpen(!isAIPanelOpen)}
+            >
+              ✨
+            </button>
+          </div>
+          <div className="flow-header__right">
+            <button className="flow-header__btn flow-header__btn--save" onClick={handleSave}>
+              Save
+            </button>
+            <button className="flow-header__btn" onClick={handleImport} title="Import JSON">
+              Import
+            </button>
+            <button className="flow-header__btn flow-header__btn--dark" onClick={handleExport}>
+              Export
+            </button>
+            <button className="flow-header__btn flow-header__btn--circle" title="Settings">
+              <Setting size={16} />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flow-stage">
         <WorkflowSidebar onAddNode={addNode} />
         <div className="flow-canvas">
@@ -464,6 +607,68 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({ saveTrigger }) => {
           onClose={() => setModal((p) => ({ ...p, isOpen: false }))}
         />
       )}
+
+      <AIAssistantPanel
+        isOpen={isAIPanelOpen}
+        onClose={() => setIsAIPanelOpen(false)}
+        isProcessing={isLoadingWorkflow}
+        onSendMessage={async (message, files) => {
+          setIsLoadingWorkflow(true);
+          let response;
+
+          if (files.length > 0) {
+            // Process file
+            response = await mockAIService.processDocument(files[0], message);
+          } else {
+            // Just send message
+            response = await mockAIService.sendMessage(message);
+          }
+
+          // Load workflow if AI generated one
+          if (response.workflow) {
+            const ns = hydrateWorkflowNodes(response.workflow.nodes, makeNodeData);
+            const es = hydrateWorkflowEdges(response.workflow.edges, deleteEdgeRef.current);
+
+            // Animate nodes in sequentially
+            setNodes([]);
+            setEdges([]);
+
+            await new Promise(resolve => setTimeout(resolve, 300)); // Brief pause before animation starts
+
+            // Add nodes one by one with animation
+            ns.forEach((node, index) => {
+              setTimeout(() => {
+                const animatedNode = {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    isAnimating: true
+                  }
+                };
+                setNodes((prev) => [...prev, animatedNode]);
+
+                // Remove animation flag after animation completes
+                setTimeout(() => {
+                  setNodes((prev) =>
+                    prev.map((n) =>
+                      n.id === node.id ? { ...n, data: { ...n.data, isAnimating: false } } : n
+                    )
+                  );
+                }, 600);
+              }, index * 150); // Stagger each node by 150ms
+            });
+
+            // Add edges after nodes are mostly loaded
+            setTimeout(() => {
+              setEdges(es);
+              idRef.current = computeNextNodeIdFromPersisted(response.workflow!.nodes);
+              setIsLoadingWorkflow(false);
+            }, ns.length * 150 + 400);
+          } else {
+            setIsLoadingWorkflow(false);
+          }
+        }}
+      />
     </div>
   );
 };

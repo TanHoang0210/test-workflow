@@ -5,7 +5,13 @@ import FlowComponent from "./FlowComponent";
 
 const WebFlow = reactToWebComponent(FlowComponent, React, ReactDOM, {
   props: {
-    saveTrigger: "number"
+    saveTrigger: "number",
+    showHeader: "boolean",
+    onSave: "function",
+    onImport: "function",
+    onExport: "function",
+    onUndo: "function",
+    onRedo: "function"
   }
 });
 

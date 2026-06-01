@@ -1,13 +1,29 @@
 <div class="flow-container">
+  <!--
+    DEFAULT: Hiển thị header built-in
+    <react-flow-builder
+      #flowBuilder
+      [showHeader]="true"
+    ></react-flow-builder>
+  -->
+
+  <!--
+    CUSTOM: Ẩn header built-in và dùng custom handlers
+    Uncomment dòng dưới và comment dòng trên để dùng custom handlers
+  -->
   <react-flow-builder
     #flowBuilder
+    [showHeader]="true"
+    (onSave)="onSave()"
   ></react-flow-builder>
-  <button
+  <!-- <button
     class="save-btn"
     [class.saving]="saveStatus() === 'saving'"
     [class.saved]="saveStatus() === 'saved'"
-    (click)="save()"
+    (click)="onSave()"
   >
     {{ saveStatus() === 'saving' ? 'Đang lưu...' : saveStatus() === 'saved' ? '✓ Đã lưu' : 'Lưu' }}
-  </button>
+  </button> -->
 </div>
+<script type="module" src="/react-flow.js"></script>
+<link rel="stylesheet" href="/react-flow-wrapper.css" />

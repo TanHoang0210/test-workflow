@@ -2,7 +2,12 @@
   "name": "workflow-builder-widget",
   "version": "1.0.0",
   "description": "Workflow builder web component — drag-and-drop node editor, form builder, save/restore",
-  "keywords": ["workflow", "react-flow", "web-component", "drag-drop"],
+  "keywords": [
+    "workflow",
+    "react-flow",
+    "web-component",
+    "drag-drop"
+  ],
   "type": "module",
   "main": "./dist/react-flow.umd.cjs",
   "module": "./dist/react-flow.js",
@@ -31,7 +36,8 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-to-webcomponent": "^2.0.1",
-    "reactflow": "^11.11.4"
+    "reactflow": "^11.11.4",
+    "vuesax-icons-react": "^1.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
