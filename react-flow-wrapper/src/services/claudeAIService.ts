@@ -1,4 +1,6 @@
 import Groq from 'groq-sdk';
+import * as pdfjs from 'pdfjs-dist';
+import mammoth from 'mammoth';
 import type { WorkflowPersistPayloadV1 } from '../workflow/types';
 
 export interface ConversationMessage {
@@ -77,6 +79,47 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function extractTextFromPDF(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await fileToArrayBuffer(file);
+    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      text += textContent.items.map((item: any) => item.str).join(' ');
+      text += '\n';
+    }
+
+    return text;
+  } catch (err) {
+    console.error('PDF parsing failed:', err);
+    throw new Error('Failed to parse PDF file');
+  }
+}
+
+async function extractTextFromDOCX(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await fileToArrayBuffer(file);
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  } catch (err) {
+    console.error('DOCX parsing failed:', err);
+    throw new Error('Failed to parse DOCX file');
+  }
+}
+
 const groq = new Groq({
   apiKey: import.meta.env.VITE_GROQ_API_KEY as string,
   dangerouslyAllowBrowser: true,
@@ -94,9 +137,10 @@ export const claudeAIService = {
     ];
 
     let userText = message || 'Please analyze this document and generate a workflow.';
+
     if (file) {
       if (file.type.startsWith('image/')) {
-        // Groq vision: embed image as base64 content block
+        // Image: use Groq Vision
         const data = await fileToBase64(file);
         messages.push({
           role: 'user',
@@ -105,11 +149,21 @@ export const claudeAIService = {
             { type: 'text', text: userText },
           ],
         });
+      } else if (file.type === 'application/pdf') {
+        // PDF: extract text properly
+        const extractedText = await extractTextFromPDF(file);
+        userText = `[PDF Document: ${file.name}]\n\n${extractedText}\n\n${userText}`;
+        messages.push({ role: 'user', content: userText });
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        // DOCX: extract text properly
+        const extractedText = await extractTextFromDOCX(file);
+        userText = `[Word Document: ${file.name}]\n\n${extractedText}\n\n${userText}`;
+        messages.push({ role: 'user', content: userText });
       } else {
-        // Text / PDF: decode and include as text
+        // Text files (txt, md, csv, etc)
         const data = await fileToBase64(file);
         const decoded = atob(data);
-        userText = `[Uploaded file: ${file.name}]\n\n${decoded}\n\n${userText}`;
+        userText = `[Text File: ${file.name}]\n\n${decoded}\n\n${userText}`;
         messages.push({ role: 'user', content: userText });
       }
     } else {

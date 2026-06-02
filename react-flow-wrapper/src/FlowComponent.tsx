@@ -30,6 +30,7 @@ import {
   parseWorkflowPayload,
   tryReadPersistedPayload
 } from "./workflow/graphUtils";
+import { applyLayout } from "./workflow/layoutUtils";
 import { uid } from "./workflow/uid";
 
 import { useGraphHistory } from "./workflow/useGraphHistory";
@@ -614,12 +615,15 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
           const ns = hydrateWorkflowNodes(workflow.nodes, makeNodeData);
           const es = hydrateWorkflowEdges(workflow.edges, deleteEdgeRef.current);
 
+          // Apply DAG layout to position nodes nicely
+          const layoutedNodes = applyLayout(ns, workflow.edges);
+
           setNodes([]);
           setEdges([]);
           setIsLoadingWorkflow(true);
 
           // Animate nodes in sequentially
-          ns.forEach((node, index) => {
+          layoutedNodes.forEach((node, index) => {
             setTimeout(() => {
               setNodes((prev) => [
                 ...prev,
@@ -639,7 +643,7 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
             setEdges(es);
             idRef.current = computeNextNodeIdFromPersisted(workflow.nodes);
             setIsLoadingWorkflow(false);
-          }, ns.length * 150 + 400);
+          }, layoutedNodes.length * 150 + 400);
         }}
       />
     </div>

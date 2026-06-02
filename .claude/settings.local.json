@@ -24,7 +24,15 @@
       "Bash(copy \"dist\\\\react-flow.iife.js\" \"..\\\\public\\\\react-flow.js\")",
       "Bash(copy \"dist\\\\workflow-builder-widget.css\" \"..\\\\public\\\\react-flow-wrapper.css\")",
       "PowerShell(Copy-Item \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\dist\\\\react-flow.iife.js\" \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\public\\\\react-flow.js\" -Force)",
-      "PowerShell(Copy-Item \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\dist\\\\workflow-builder-widget.css\" \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\public\\\\react-flow-wrapper.css\" -Force)"
+      "PowerShell(Copy-Item \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\react-flow-wrapper\\\\dist\\\\workflow-builder-widget.css\" \"f:\\\\WORK\\\\VNPT\\\\WORKFLOW\\\\test-workflow\\\\public\\\\react-flow-wrapper.css\" -Force)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(cat)",
+      "Bash(python3 /tmp/screenshot_flow.py)",
+      "Bash(screencapture -x /tmp/flow-app.png)",
+      "Bash(grep -E \"\\\\.\\(css|scss\\)$\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(screencapture -x /tmp/ai-footer-new.png)",
+      "Bash(pkill -f \"npm run dev\")"
     ]
   }
 }

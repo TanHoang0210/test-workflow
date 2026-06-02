@@ -1,5 +1,5 @@
 import React from "react";
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from "reactflow";
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from "reactflow";
 import type { EdgeData } from "../workflow/types";
 
 export const DeletableEdge: React.FC<EdgeProps<EdgeData>> = ({
@@ -13,13 +13,14 @@ export const DeletableEdge: React.FC<EdgeProps<EdgeData>> = ({
   data,
   selected
 }) => {
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
-    targetPosition
+    targetPosition,
+    borderRadius: 4
   });
   return (
     <>

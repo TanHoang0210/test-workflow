@@ -38,13 +38,27 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   const [inputValue, setInputValue] = React.useState('');
   const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showMenu, setShowMenu] = React.useState(false);
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenu]);
 
   const addMessage = (msg: Omit<ChatMessage, 'id'>) => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -125,16 +139,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     }
   };
 
-  const clearHistory = () => {
-    historyRef.current = [];
-    setMessages([
-      {
-        id: 'welcome-reset',
-        role: 'assistant',
-        content: '🔄 Cuộc trò chuyện đã được xóa. Hãy bắt đầu lại!',
-      },
-    ]);
-  };
 
   if (!isOpen) return null;
 
@@ -142,26 +146,12 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     <div className="ai-panel">
       {/* Header */}
       <div className="ai-panel__header">
-        <div className="ai-panel__title">
-          <span className="ai-panel__icon">✨</span>
-          <div className="ai-panel__title-text">
-            <h3>AI Assistant</h3>
-            <p>Powered by Claude</p>
-          </div>
+        <div className="ai-panel__logo">
+          <span className="ai-panel__logo-text">VNPT AI</span>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button
-            className="ai-panel__close"
-            onClick={clearHistory}
-            title="Xóa lịch sử trò chuyện"
-            style={{ fontSize: 14, padding: '4px 8px' }}
-          >
-            🗑
-          </button>
-          <button className="ai-panel__close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
+        <button className="ai-panel__close-btn" onClick={onClose} title="Đóng">
+          ✕
+        </button>
       </div>
 
       {/* Messages */}
@@ -224,34 +214,53 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
           className="ai-panel__file-input"
         />
 
-        <div className="ai-panel__input-area">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isLoading ? 'Đang xử lý...' : 'Mô tả workflow hoặc đặt câu hỏi...'}
-            className="ai-panel__input"
-            disabled={isLoading}
-          />
-          <button
-            className="ai-panel__send-btn"
-            onClick={handleSend}
-            disabled={isLoading || (!inputValue.trim() && selectedFiles.length === 0)}
-          >
-            {isLoading ? '⏳' : '➤'}
-          </button>
-        </div>
-
-        <div className="ai-panel__actions">
-          <button
-            className="ai-panel__action-btn"
-            onClick={() => fileInputRef.current?.click()}
-            title="Upload tài liệu (PDF, ảnh, txt...)"
-            disabled={isLoading}
-          >
-            📎 Upload
-          </button>
+        <div className="ai-panel__input-container">
+          <div className="ai-panel__input-wrapper">
+            <div className="ai-panel__input-menu-wrapper" ref={menuRef}>
+              <button
+                className="ai-panel__plus-btn"
+                onClick={() => setShowMenu(!showMenu)}
+                title="Thêm tùy chọn"
+                disabled={isLoading}
+              >
+                +
+              </button>
+              {showMenu && (
+                <div className="ai-panel__dropdown-menu">
+                  <button className="ai-panel__menu-item" onClick={() => fileInputRef.current?.click()}>
+                    📎 Add files or photos
+                  </button>
+                  <button className="ai-panel__menu-item">📸 Take a screenshot</button>
+                  <button className="ai-panel__menu-item">📌 Add to project</button>
+                  <div className="ai-panel__menu-divider"></div>
+                  <button className="ai-panel__menu-item">⚡ Skills</button>
+                  <button className="ai-panel__menu-item">🔗 Connectors</button>
+                  <button className="ai-panel__menu-item">🔌 Add plugins...</button>
+                  <div className="ai-panel__menu-divider"></div>
+                  <button className="ai-panel__menu-item">🔍 Research</button>
+                  <button className="ai-panel__menu-item">🌐 Web search</button>
+                  <button className="ai-panel__menu-item">🎨 Use style</button>
+                </div>
+              )}
+            </div>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Nhập mô tả app cần tạo"
+              className="ai-panel__input"
+              disabled={isLoading}
+            />
+            <button
+              className="ai-panel__send-btn"
+              onClick={handleSend}
+              disabled={isLoading || (!inputValue.trim() && selectedFiles.length === 0)}
+              title="Gửi"
+            >
+              {isLoading ? '⏳' : '➤'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

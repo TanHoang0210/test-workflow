@@ -42,9 +42,18 @@ export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
   onAppendConnected,
   onNodeDragStart
 }) => {
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const hostRef = React.useRef<HTMLDivElement>(null);
   const [selectedHintId, setSelectedHintId] = React.useState<string | null>(null);
+
+  // Auto fit view when nodes change significantly
+  React.useEffect(() => {
+    if (nodes.length > 0) {
+      setTimeout(() => {
+        fitView({ padding: 0.15, duration: 600 });
+      }, 100);
+    }
+  }, [nodes.length, fitView]);
 
   const onSelectionChange = React.useCallback<OnSelectionChangeFunc>(({ nodes: sel }) => {
     setSelectedHintId(sel.length === 1 ? sel[0].id : null);
