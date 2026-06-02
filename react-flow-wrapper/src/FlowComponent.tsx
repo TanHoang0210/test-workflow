@@ -281,9 +281,17 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
 
   React.useLayoutEffect(() => {
     const p = tryReadPersistedPayload(WORKFLOW_STORAGE_KEY);
-    if (!p || p.nodes.length === 0) return;
+    if (!p || p.nodes.length === 0) {
+      setNodes([{ id: '1', type: 'start-event', position: { x: 300, y: 100 }, data: makeNodeData('start-event') }]);
+      idRef.current = 2;
+      return;
+    }
     const hydrated = hydrateWorkflowNodes(p.nodes, makeNodeData);
-    if (hydrated.length === 0) return;
+    if (hydrated.length === 0) {
+      setNodes([{ id: '1', type: 'start-event', position: { x: 300, y: 100 }, data: makeNodeData('start-event') }]);
+      idRef.current = 2;
+      return;
+    }
     setNodes(hydrated);
     setEdges(hydrateWorkflowEdges(p.edges, (id) => deleteEdgeRef.current(id)));
     idRef.current = computeNextNodeIdFromPersisted(p.nodes);
@@ -453,9 +461,20 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
   const nodeTypes = React.useMemo(
     () => ({
       "start-event": WorkflowNodeView,
+      "end-event": WorkflowNodeView,
       activity: WorkflowNodeView,
+      form: WorkflowNodeView,
+      notification: WorkflowNodeView,
       condition: WorkflowNodeView,
-      "end-event": WorkflowNodeView
+      redirect: WorkflowNodeView,
+      "alert-error": WorkflowNodeView,
+      "create-keyword": WorkflowNodeView,
+      "attach-file": WorkflowNodeView,
+      submit: WorkflowNodeView,
+      "view-sign": WorkflowNodeView,
+      "history-log": WorkflowNodeView,
+      "find-records": WorkflowNodeView,
+      switch: WorkflowNodeView,
     }),
     []
   );

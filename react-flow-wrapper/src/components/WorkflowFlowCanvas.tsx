@@ -110,7 +110,7 @@ export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
         deleteKeyCode={null}
         fitView
       >
-        <Background gap={20} size={1} color="#e2e8f0" />
+        <Background gap={20} size={1.5} color="#b8bec8" />
         <Controls />
         <NodeConnectionHints
           containerRef={hostRef}

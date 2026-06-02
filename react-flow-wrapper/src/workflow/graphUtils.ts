@@ -46,10 +46,16 @@ export function defaultFormData(type: WorkflowNodeType): NodeFormData {
   if (type === "end-event") {
     return { ...empty, label: "Kết thúc", routingCondition: "" };
   }
-  if (type === "condition") {
-    return { ...empty, label: "Điều kiện", routingCondition: "" };
+  if (type === "condition" || type === "switch") {
+    return { ...empty, label: type === "switch" ? "Switch" : "Điều kiện", routingCondition: "" };
   }
-  return { ...empty, label: "Bước", routingCondition: "" };
+  const labelMap: Partial<Record<WorkflowNodeType, string>> = {
+    form: "Form", notification: "Notification", redirect: "Redirect",
+    "alert-error": "Alert Error", "create-keyword": "Create Keyword",
+    "attach-file": "Attach File", submit: "Submit", "view-sign": "View & Sign",
+    "history-log": "History Log", "find-records": "Find Records",
+  };
+  return { ...empty, label: labelMap[type] ?? "Bước", routingCondition: "" };
 }
 
 export function getOutgoingBranchTargets(
@@ -136,12 +142,12 @@ export function mergeBranchFormData(form: NodeFormData, targetIds: string[]): No
 }
 
 function isWorkflowNodeTypeString(s: string): s is WorkflowNodeType {
-  return (
-    s === "start-event" ||
-    s === "activity" ||
-    s === "condition" ||
-    s === "end-event"
-  );
+  return [
+    "start-event", "end-event", "activity",
+    "form", "notification", "condition", "redirect",
+    "alert-error", "create-keyword", "attach-file", "submit",
+    "view-sign", "history-log", "find-records", "switch",
+  ].includes(s);
 }
 
 export function computeNextNodeIdFromPersisted(persistedNodes: Array<{ id: string }>): number {

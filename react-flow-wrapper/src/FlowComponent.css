@@ -6,7 +6,7 @@
   width: 100%;
   height: 100%;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #eef0f4;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -298,116 +298,144 @@
 }
 
 /* Sidebar với icon + label */
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
 .flow-sidebar {
   flex: 0 0 auto;
-  width: 140px;
-  min-width: 140px;
+  width: 200px;
+  min-width: 200px;
   border-right: 1px solid #e2e8f0;
-  background: #ffffff;
-  padding: 12px 10px;
+  background: #f8fafc;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.flow-sidebar__header {
+  padding: 14px 16px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.flow-sidebar__search-wrap {
+  position: relative;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.flow-sidebar__search {
+  width: 100%;
+  padding: 7px 32px 7px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #f8fafc;
+  color: #1e293b;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.flow-sidebar__search:focus {
+  border-color: #94a3b8;
+  background: #ffffff;
+}
+
+.flow-sidebar__search::placeholder { color: #94a3b8; }
+
+.flow-sidebar__search-icon {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.flow-sidebar__list {
+  flex: 1;
   overflow-y: auto;
+  padding: 8px 0;
 }
 
 .flow-sidebar__item {
   width: 100%;
-  aspect-ratio: auto;
-  padding: 10px 12px;
+  padding: 9px 14px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
+  gap: 10px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   cursor: grab;
   color: #1e293b;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-  font-size: 12px;
+  transition: background 0.12s ease;
+  font-size: 13px;
   font-weight: 500;
-  text-align: center;
+  text-align: left;
 }
 
-.flow-sidebar__item:active {
-  cursor: grabbing;
-}
+.flow-sidebar__item:hover { background: #f1f5f9; }
+.flow-sidebar__item:active { cursor: grabbing; background: #e2e8f0; }
 
 .flow-sidebar__item-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid currentColor;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
 }
 
 .flow-sidebar__item-label {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: normal;
-  word-break: break-word;
-}
-
-.flow-sidebar__item--start-event {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #15803d;
-}
-
-.flow-sidebar__item--start-event:hover {
-  border-color: #22c55e;
-  background: #dcfce7;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
-}
-
-.flow-sidebar__item--activity {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.flow-sidebar__item--activity:hover {
-  border-color: #3b82f6;
-  background: #dbeafe;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-}
-
-.flow-sidebar__item--condition {
-  border-color: #ddd6fe;
-  background: #faf5ff;
-  color: #6d28d9;
-}
-
-.flow-sidebar__item--condition:hover {
-  border-color: #7c3aed;
-  background: #f3e8ff;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
-}
-
-.flow-sidebar__item--end-event {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.flow-sidebar__item--end-event:hover {
-  border-color: #ef4444;
-  background: #fee2e2;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.3;
 }
 
 .flow-sidebar__glyph {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   display: block;
   pointer-events: none;
 }
+
+/* ── Sidebar node icon colors (outline style) ─────────────────────────────── */
+
+.flow-sidebar__item--form         { color: #7c3aed; }
+.flow-sidebar__item--notification { color: #2563eb; }
+.flow-sidebar__item--condition    { color: #16a34a; }
+.flow-sidebar__item--redirect     { color: #ea580c; }
+.flow-sidebar__item--alert-error  { color: #dc2626; }
+.flow-sidebar__item--create-keyword { color: #0e7490; }
+.flow-sidebar__item--attach-file  { color: #15803d; }
+.flow-sidebar__item--submit       { color: #d97706; }
+.flow-sidebar__item--view-sign    { color: #c2410c; }
+.flow-sidebar__item--history-log  { color: #0891b2; }
+.flow-sidebar__item--find-records { color: #b45309; }
+.flow-sidebar__item--switch       { color: #4f46e5; }
+.flow-sidebar__item--start-event  { color: #15803d; }
+.flow-sidebar__item--end-event    { color: #b91c1c; }
+.flow-sidebar__item--activity     { color: #1d4ed8; }
+
+.flow-sidebar__item-label { color: #1e293b; }
 
 .flow-canvas {
   flex: 1;

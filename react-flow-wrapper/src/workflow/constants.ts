@@ -17,9 +17,20 @@ export const HAS_OPTIONS: FieldType[] = ["select", "radio", "checklist"];
 
 export const NODE_TYPE_LABELS: Record<WorkflowNodeType, string> = {
   "start-event": "Start",
+  "end-event": "End",
   activity: "Task",
+  form: "Form",
+  notification: "Notification",
   condition: "Condition",
-  "end-event": "End"
+  redirect: "Redirect",
+  "alert-error": "Alert_Error",
+  "create-keyword": "Create_Keyword",
+  "attach-file": "Attach file",
+  submit: "Submit",
+  "view-sign": "View and sign",
+  "history-log": "History log",
+  "find-records": "Find_Records",
+  switch: "Switch",
 };
 
 export const WORKFLOW_NODE_DRAG_MIME = "text/workflow-node-type";
@@ -28,20 +39,16 @@ export const WORKFLOW_STORAGE_KEY = "workflow-builder-state-v1";
 export const WORKFLOW_PUBLIC_JSON = "/workflow-save.json";
 
 export const SIDEBAR_NODE_ITEMS: { type: WorkflowNodeType; tooltip: string }[] = [
-  {
-    type: "start-event",
-    tooltip: "Start — drag to canvas or click to add"
-  },
-  {
-    type: "activity",
-    tooltip: "Task — drag to canvas or click to add"
-  },
-  {
-    type: "condition",
-    tooltip: "Condition — drag to canvas or click to add"
-  },
-  {
-    type: "end-event",
-    tooltip: "End — drag to canvas or click to add"
-  }
+  { type: "form",           tooltip: "Thu thập dữ liệu từ người dùng qua biểu mẫu" },
+  { type: "notification",   tooltip: "Gửi thông báo đến người dùng hoặc nhóm" },
+  { type: "condition",      tooltip: "Phân nhánh luồng theo điều kiện True/False" },
+  { type: "redirect",       tooltip: "Chuyển hướng sang node hoặc workflow khác" },
+  { type: "alert-error",    tooltip: "Xử lý lỗi và hiển thị cảnh báo" },
+  { type: "create-keyword", tooltip: "Tạo hoặc gán từ khóa cho đối tượng" },
+  { type: "attach-file",    tooltip: "Đính kèm tệp vào workflow" },
+  { type: "submit",         tooltip: "Xác nhận và gửi dữ liệu đã thu thập" },
+  { type: "view-sign",      tooltip: "Xem và ký số tài liệu" },
+  { type: "history-log",    tooltip: "Ghi lại lịch sử hành động trong workflow" },
+  { type: "find-records",   tooltip: "Tìm kiếm và truy vấn dữ liệu" },
+  { type: "switch",         tooltip: "Phân nhánh theo nhiều trường hợp (switch-case)" },
 ];

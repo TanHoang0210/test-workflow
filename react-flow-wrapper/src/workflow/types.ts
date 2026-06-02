@@ -29,7 +29,22 @@ export type NodeFormData = {
   configProperties: NodeConfigProperty[];
 };
 
-export type WorkflowNodeType = "start-event" | "activity" | "condition" | "end-event";
+export type WorkflowNodeType =
+  | "start-event"
+  | "end-event"
+  | "activity"
+  | "form"
+  | "notification"
+  | "condition"
+  | "redirect"
+  | "alert-error"
+  | "create-keyword"
+  | "attach-file"
+  | "submit"
+  | "view-sign"
+  | "history-log"
+  | "find-records"
+  | "switch";
 
 export type WorkflowNodeData = {
   nodeType: WorkflowNodeType;

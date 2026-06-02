@@ -10,7 +10,8 @@
     "serve:ssr:workflow-builder": "node dist/workflow-builder/server/server.mjs",
     "build:widget": "cd react-flow-wrapper && npm run build && copy dist\\react-flow.iife.js ..\\public\\react-flow.js && copy dist\\workflow-builder-widget.css ..\\public\\react-flow-wrapper.css",
     "pack:widget": "cd react-flow-wrapper && npm run build && npm pack --pack-destination ..",
-    "build:firebase": "node scripts/build-all.mjs"
+    "build:firebase": "node scripts/build-all.mjs",
+    "deploy": "node scripts/build-all.mjs && firebase deploy --only hosting"
   },
   "prettier": {
     "printWidth": 100,
