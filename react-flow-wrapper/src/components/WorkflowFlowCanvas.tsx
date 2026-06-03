@@ -109,6 +109,8 @@ export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
         onDrop={handleDrop}
         deleteKeyCode={null}
         fitView
+        fitViewOptions={{ padding: 0.3 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.75 }}
       >
         <Background gap={20} size={1.5} color="#b8bec8" />
         <Controls />

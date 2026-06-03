@@ -36,11 +36,18 @@ import { uid } from "./workflow/uid";
 import { useGraphHistory } from "./workflow/useGraphHistory";
 
 import { DeletableEdge } from "./components/DeletableEdge";
-import { FormBuilderModal } from "./components/FormBuilderModal";
 import { WorkflowFlowCanvas } from "./components/WorkflowFlowCanvas";
-import { WorkflowNodeView } from "./components/WorkflowNodeView";
 import { WorkflowSidebar } from "./components/WorkflowSidebar";
 import { AIAssistantPanel } from "./components/AIAssistantPanel";
+import { StartEventNodeView } from "./components/nodes/StartEventNodeView";
+import { ActivityNodeView } from "./components/nodes/ActivityNodeView";
+import { ConditionNodeView } from "./components/nodes/ConditionNodeView";
+import { EndEventNodeView } from "./components/nodes/EndEventNodeView";
+import { StartEventNodeForm } from "./components/forms/StartEventNodeForm";
+import { ActivityNodeForm } from "./components/forms/ActivityNodeForm";
+import { ConditionNodeForm } from "./components/forms/ConditionNodeForm";
+import { EndEventNodeForm } from "./components/forms/EndEventNodeForm";
+import type { NodeConfigFormProps } from "./components/forms/nodeFormTypes";
 
 /** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
 export type FlowWidgetProps = {
@@ -217,8 +224,19 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
   const deleteNode = React.useCallback(
     (nodeId: string) => {
       snap();
-      setNodes((ns) => ns.filter((n) => n.id !== nodeId));
-      setEdges((es) => es.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      const { nodes: ns, edges: es } = graphStateRef.current;
+      const target = ns.find((n) => n.id === nodeId);
+      let actualId = nodeId;
+      if (target?.data.nodeType === "start-event") {
+        const unconnected = ns.find(
+          (n) =>
+            n.data.nodeType === "start-event" &&
+            !es.some((e) => e.source === n.id || e.target === n.id)
+        );
+        if (unconnected) actualId = unconnected.id;
+      }
+      setNodes((prev) => prev.filter((n) => n.id !== actualId));
+      setEdges((prev) => prev.filter((e) => e.source !== actualId && e.target !== actualId));
     },
     [setNodes, setEdges]
   );
@@ -458,23 +476,33 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
     setModal((p) => ({ ...p, isOpen: false }));
   };
 
+  const NODE_FORM_MAP: Record<string, React.ComponentType<NodeConfigFormProps>> = React.useMemo(
+    () => ({
+      "start-event": StartEventNodeForm,
+      "end-event": EndEventNodeForm,
+      activity: ActivityNodeForm,
+      condition: ConditionNodeForm,
+    }),
+    []
+  );
+
   const nodeTypes = React.useMemo(
     () => ({
-      "start-event": WorkflowNodeView,
-      "end-event": WorkflowNodeView,
-      activity: WorkflowNodeView,
-      form: WorkflowNodeView,
-      notification: WorkflowNodeView,
-      condition: WorkflowNodeView,
-      redirect: WorkflowNodeView,
-      "alert-error": WorkflowNodeView,
-      "create-keyword": WorkflowNodeView,
-      "attach-file": WorkflowNodeView,
-      submit: WorkflowNodeView,
-      "view-sign": WorkflowNodeView,
-      "history-log": WorkflowNodeView,
-      "find-records": WorkflowNodeView,
-      switch: WorkflowNodeView,
+      "start-event": StartEventNodeView,
+      "end-event": EndEventNodeView,
+      activity: ActivityNodeView,
+      form: ActivityNodeView,
+      notification: ActivityNodeView,
+      condition: ConditionNodeView,
+      redirect: ActivityNodeView,
+      "alert-error": ActivityNodeView,
+      "create-keyword": ActivityNodeView,
+      "attach-file": ActivityNodeView,
+      submit: ActivityNodeView,
+      "view-sign": ActivityNodeView,
+      "history-log": ActivityNodeView,
+      "find-records": ActivityNodeView,
+      switch: ActivityNodeView,
     }),
     []
   );
@@ -614,18 +642,21 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
         </div>
       </div>
 
-      {modal.isOpen && modal.nodeId && modal.nodeType && (
-        <FormBuilderModal
-          key={modal.nodeId}
-          form={modal.form}
-          nodeType={modal.nodeType}
-          conditionSourceNodeId={modal.nodeType === "condition" ? modal.nodeId : null}
-          graphEdges={edges}
-          graphNodes={nodes}
-          onSave={saveModal}
-          onClose={() => setModal((p) => ({ ...p, isOpen: false }))}
-        />
-      )}
+      {modal.isOpen && modal.nodeId && modal.nodeType && (() => {
+        const FormComp = NODE_FORM_MAP[modal.nodeType] ?? ActivityNodeForm;
+        return (
+          <FormComp
+            key={modal.nodeId}
+            form={modal.form}
+            nodeId={modal.nodeId}
+            nodeType={modal.nodeType}
+            graphEdges={edges}
+            graphNodes={nodes}
+            onSave={saveModal}
+            onClose={() => setModal((p) => ({ ...p, isOpen: false }))}
+          />
+        );
+      })()}
 
       <AIAssistantPanel
         isOpen={isAIPanelOpen}

@@ -39,6 +39,8 @@ export const WORKFLOW_STORAGE_KEY = "workflow-builder-state-v1";
 export const WORKFLOW_PUBLIC_JSON = "/workflow-save.json";
 
 export const SIDEBAR_NODE_ITEMS: { type: WorkflowNodeType; tooltip: string }[] = [
+  { type: "start-event",    tooltip: "Điểm bắt đầu của workflow — mỗi luồng chỉ có một" },
+  { type: "end-event",      tooltip: "Điểm kết thúc của workflow — đánh dấu hoàn thành" },
   { type: "form",           tooltip: "Thu thập dữ liệu từ người dùng qua biểu mẫu" },
   { type: "notification",   tooltip: "Gửi thông báo đến người dùng hoặc nhóm" },
   { type: "condition",      tooltip: "Phân nhánh luồng theo điều kiện True/False" },
