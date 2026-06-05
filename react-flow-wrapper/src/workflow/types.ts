@@ -1,15 +1,47 @@
 import type { XYPosition } from "reactflow";
 
-export type FieldType = "text" | "textarea" | "date" | "select" | "radio" | "checklist";
+export type FieldType =
+  | "text" | "textarea" | "date"
+  | "select" | "radio" | "checklist"
+  | "number" | "file-upload" | "rating";
 
 export type FieldOption = { id: string; label: string };
+
+export type FieldValidation = {
+  type: "email" | "phone" | "regex" | "length" | null;
+  pattern?: string;
+  maxLength?: number;
+  minLength?: number;
+};
+
+export type FieldDefaultValue = {
+  source: "fixed" | "variable" | "previous";
+  value: string;
+};
+
+export type FieldConditionalVisibility = {
+  fieldKey: string;
+  operator: "equals" | "not_equals" | "contains" | "is_empty" | "is_not_empty";
+  value: string;
+};
 
 export type FormField = {
   id: string;
   type: FieldType;
   label: string;
   options: FieldOption[];
+  // Extended (optional, backward compat)
+  key?: string;
+  placeholder?: string;
+  description?: string;
+  required?: boolean;
+  readOnly?: boolean;
+  validation?: FieldValidation;
+  defaultValue?: FieldDefaultValue;
+  conditionalVisibility?: FieldConditionalVisibility | null;
 };
+
+export type ConfigPropertySource = "fixed" | "variable" | "previous" | "expression";
 
 /** Thuộc tính mở rộng trên node: tên hiển thị + key + giá trị (xuất trong JSON workflow). */
 export type NodeConfigProperty = {
@@ -19,6 +51,7 @@ export type NodeConfigProperty = {
   /** Key kỹ thuật */
   key: string;
   value: string;
+  source?: ConfigPropertySource;
 };
 
 export type NodeFormData = {
@@ -64,6 +97,7 @@ export type ModalState = {
 
 export type EdgeData = {
   onDeleteEdge: (edgeId: string) => void;
+  color?: string;
 };
 
 export type WorkflowPersistPayloadV1 = {

@@ -27,7 +27,11 @@ export const DeletableEdge: React.FC<EdgeProps<EdgeData>> = ({
       <BaseEdge
         id={id}
         path={edgePath}
-        style={{ stroke: selected ? "#2563eb" : "#94a3b8", strokeWidth: selected ? 2.5 : 1.5 }}
+        style={{
+          stroke: selected ? (data?.color ?? "#2563eb") : (data?.color ?? "#94a3b8"),
+          strokeWidth: selected ? 2.5 : 1.5,
+          opacity: selected ? 1 : 0.85,
+        }}
       />
       {selected && (
         <EdgeLabelRenderer>

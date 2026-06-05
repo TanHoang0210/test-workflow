@@ -11,7 +11,7 @@ import {
   type XYPosition
 } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
-import { ArrowRotateLeft, ArrowRotateRight, Setting } from "vuesax-icons-react";
+import { ArrowRotateLeft, ArrowRotateRight } from "vuesax-icons-react";
 import wflogo from "../public/wflogo.png";
 import "reactflow/dist/style.css";
 import "./FlowComponent.css";
@@ -47,6 +47,7 @@ import { StartEventNodeForm } from "./components/forms/StartEventNodeForm";
 import { ActivityNodeForm } from "./components/forms/ActivityNodeForm";
 import { ConditionNodeForm } from "./components/forms/ConditionNodeForm";
 import { EndEventNodeForm } from "./components/forms/EndEventNodeForm";
+import { NotificationNodeForm } from "./components/forms/NotificationNodeForm";
 import type { NodeConfigFormProps } from "./components/forms/nodeFormTypes";
 
 /** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
@@ -127,10 +128,42 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
   });
 
   const [isAIPanelOpen, setIsAIPanelOpen] = React.useState(false);
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   const flowRootRef = React.useRef<HTMLDivElement>(null);
   const graphStateRef = React.useRef({ nodes: [] as FlowNode<WorkflowNodeData>[], edges: [] as Edge[] });
   graphStateRef.current = { nodes, edges };
+
+  // Sync edge colors from condition node branch config
+  React.useEffect(() => {
+    const conditionNodes = nodes.filter((n) => n.data.nodeType === "condition");
+    if (conditionNodes.length === 0) return;
+
+    const branchColorMap = new Map<string, string>(); // targetId → color
+    for (const node of conditionNodes) {
+      const branchProp = node.data.formData.configProperties?.find(
+        (c) => c.key === "__conditionBranches"
+      );
+      if (!branchProp?.value) continue;
+      try {
+        const branches: { targetId?: string; color?: string }[] = JSON.parse(branchProp.value);
+        for (const b of branches) {
+          if (b.targetId && b.color) branchColorMap.set(b.targetId, b.color);
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (branchColorMap.size === 0) return;
+
+    setEdges((prev) =>
+      prev.map((e) => {
+        const color = branchColorMap.get(e.target);
+        if (!color) return e;
+        if ((e.data as { color?: string })?.color === color) return e;
+        return { ...e, data: { ...e.data, color } };
+      })
+    );
+  }, [nodes, setEdges]);
 
   const prevSaveTriggerRef = React.useRef<number | undefined>(undefined);
 
@@ -482,6 +515,7 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
       "end-event": EndEventNodeForm,
       activity: ActivityNodeForm,
       condition: ConditionNodeForm,
+      notification: NotificationNodeForm,
     }),
     []
   );
@@ -598,13 +632,6 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
               <ArrowRotateRight size={16} />
             </button>
             <div className="flow-header__separator"></div>
-            <button
-              className="flow-header__icon-btn flow-header__icon-btn--accent"
-              title="Magic (AI)"
-              onClick={() => setIsAIPanelOpen(!isAIPanelOpen)}
-            >
-              ✨
-            </button>
           </div>
           <div className="flow-header__right">
             <button className="flow-header__btn flow-header__btn--save" onClick={handleSave}>
@@ -616,14 +643,59 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
             <button className="flow-header__btn flow-header__btn--dark" onClick={handleExport}>
               Export
             </button>
-            <button className="flow-header__btn flow-header__btn--circle" title="Settings">
+            {/* <button className="flow-header__btn flow-header__btn--circle" title="Settings">
               <Setting size={16} />
-            </button>
+            </button> */}
           </div>
         </div>
       )}
       <div className="flow-stage">
-        <WorkflowSidebar onAddNode={addNode} />
+        <WorkflowSidebar onAddNode={addNode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        {!sidebarOpen && (
+          <button
+            className="flow-sidebar-toggle"
+            title="Mở bảng node"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <i className="isax-element-31" />
+          </button>
+        )}
+        {!isAIPanelOpen && (
+          <button
+            className="flow-ai-toggle"
+            title="Mở AI Assistant"
+            onClick={() => setIsAIPanelOpen(true)}
+          >
+            <i className="isax-flash-1" />
+          </button>
+        )}
+        <AIAssistantPanel
+          isOpen={isAIPanelOpen}
+          onClose={() => setIsAIPanelOpen(false)}
+          onWorkflowGenerated={(workflow) => {
+            const ns = hydrateWorkflowNodes(workflow.nodes, makeNodeData);
+            const es = hydrateWorkflowEdges(workflow.edges, deleteEdgeRef.current);
+            const layoutedNodes = applyLayout(ns, workflow.edges);
+            setNodes([]);
+            setEdges([]);
+            setIsLoadingWorkflow(true);
+            layoutedNodes.forEach((node, index) => {
+              setTimeout(() => {
+                setNodes((prev) => [...prev, { ...node, data: { ...node.data, isAnimating: true } }]);
+                setTimeout(() => {
+                  setNodes((prev) =>
+                    prev.map((n) => n.id === node.id ? { ...n, data: { ...n.data, isAnimating: false } } : n)
+                  );
+                }, 600);
+              }, index * 150);
+            });
+            setTimeout(() => {
+              setEdges(es);
+              idRef.current = computeNextNodeIdFromPersisted(workflow.nodes);
+              setIsLoadingWorkflow(false);
+            }, layoutedNodes.length * 150 + 400);
+          }}
+        />
         <div className="flow-canvas">
           <ReactFlowProvider>
             <WorkflowFlowCanvas
@@ -658,44 +730,6 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
         );
       })()}
 
-      <AIAssistantPanel
-        isOpen={isAIPanelOpen}
-        onClose={() => setIsAIPanelOpen(false)}
-        onWorkflowGenerated={(workflow) => {
-          const ns = hydrateWorkflowNodes(workflow.nodes, makeNodeData);
-          const es = hydrateWorkflowEdges(workflow.edges, deleteEdgeRef.current);
-
-          // Apply DAG layout to position nodes nicely
-          const layoutedNodes = applyLayout(ns, workflow.edges);
-
-          setNodes([]);
-          setEdges([]);
-          setIsLoadingWorkflow(true);
-
-          // Animate nodes in sequentially
-          layoutedNodes.forEach((node, index) => {
-            setTimeout(() => {
-              setNodes((prev) => [
-                ...prev,
-                { ...node, data: { ...node.data, isAnimating: true } },
-              ]);
-              setTimeout(() => {
-                setNodes((prev) =>
-                  prev.map((n) =>
-                    n.id === node.id ? { ...n, data: { ...n.data, isAnimating: false } } : n
-                  )
-                );
-              }, 600);
-            }, index * 150);
-          });
-
-          setTimeout(() => {
-            setEdges(es);
-            idRef.current = computeNextNodeIdFromPersisted(workflow.nodes);
-            setIsLoadingWorkflow(false);
-          }, layoutedNodes.length * 150 + 400);
-        }}
-      />
     </div>
   );
 };

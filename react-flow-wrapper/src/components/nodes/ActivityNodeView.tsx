@@ -11,7 +11,7 @@ export const ActivityNodeView: React.FC<NodeProps<WorkflowNodeData>> = ({ id, da
 
   return (
     <div
-      className={`workflow-node workflow-node--activity${data.isAnimating ? " workflow-node--animating" : ""}`}
+      className={`workflow-node workflow-node--${data.nodeType}${data.isAnimating ? " workflow-node--animating" : ""}`}
       title={tip}
       onDoubleClick={(e) => { e.stopPropagation(); data.onConfigure(id); }}
     >

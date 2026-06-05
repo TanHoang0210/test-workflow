@@ -3,15 +3,10 @@ import { useStore } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
 import type { WorkflowNodeData, WorkflowNodeType } from "../workflow/types";
 import { nodeCanEmitOutgoingEdges } from "../workflow/graphUtils";
+import { NODE_TYPE_LABELS, SIDEBAR_NODE_ITEMS } from "../workflow/constants";
 import { NodeTypeGlyph } from "./NodeTypeGlyph";
 
-const APPEND_TYPES = ["activity", "condition", "end-event"] as const satisfies readonly WorkflowNodeType[];
-
-const APPEND_TOOLTIP: Record<(typeof APPEND_TYPES)[number], string> = {
-  activity: "Hoạt động — thêm bước và nối từ node này",
-  condition: "Điều kiện — thêm bước và nối từ node này",
-  "end-event": "Kết thúc — thêm bước và nối từ node này"
-};
+const CONNECTABLE_ITEMS = SIDEBAR_NODE_ITEMS.filter((i) => i.type !== "start-event");
 
 export type NodeConnectionHintsProps = {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -45,27 +40,18 @@ export const NodeConnectionHints: React.FC<NodeConnectionHintsProps> = ({
   const showPad = Boolean(sourceType && nodeCanEmitOutgoingEdges(sourceType));
 
   React.useLayoutEffect(() => {
-    if (!selectedNodeId || !showPad) {
-      setPos(null);
-      return;
-    }
+    if (!selectedNodeId || !showPad) { setPos(null); return; }
     const root = containerRef.current;
-    if (!root) {
-      setPos(null);
-      return;
-    }
+    if (!root) { setPos(null); return; }
     const nodeEl = root.querySelector(
       `.react-flow__node[data-id="${escapeSelector(selectedNodeId)}"]`
     ) as HTMLElement | null;
-    if (!nodeEl) {
-      setPos(null);
-      return;
-    }
+    if (!nodeEl) { setPos(null); return; }
     const rRoot = root.getBoundingClientRect();
     const rNode = nodeEl.getBoundingClientRect();
     setPos({
       top: rNode.top - rRoot.top,
-      left: rNode.right - rRoot.left + 8
+      left: rNode.right - rRoot.left + 12
     });
   }, [selectedNodeId, showPad, transform, nodes, containerRef]);
 
@@ -73,24 +59,25 @@ export const NodeConnectionHints: React.FC<NodeConnectionHintsProps> = ({
 
   return (
     <div
-      className="wf-context-pad nodrag nopan"
+      className="wf-node-menu nodrag nopan"
       style={{ top: pos.top, left: pos.left }}
-      role="toolbar"
-      aria-label="Thêm bước: hoạt động, điều kiện, kết thúc"
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <div className="wf-context-pad__row" role="group">
-        {APPEND_TYPES.map((t) => (
+      <p className="wf-node-menu__heading">Thêm và nối</p>
+      <div className="wf-node-menu__list">
+        {CONNECTABLE_ITEMS.map((item) => (
           <button
-            key={t}
+            key={item.type}
             type="button"
-            className="wf-context-pad__btn"
-            title={APPEND_TOOLTIP[t]}
+            className={`wf-node-menu__item wf-node-menu__item--${item.type}`}
+            title={item.tooltip}
             disabled={!onAppendConnected}
-            onClick={() => onAppendConnected?.(selectedNodeId, t)}
+            onClick={() => onAppendConnected?.(selectedNodeId, item.type)}
           >
-            <NodeTypeGlyph nodeType={t} className="wf-context-pad__glyph" />
-            <span className="sr-only">{APPEND_TOOLTIP[t]}</span>
+            <div className="wf-node-menu__icon">
+              <NodeTypeGlyph nodeType={item.type} className="wf-node-menu__glyph" />
+            </div>
+            <span className="wf-node-menu__label">{NODE_TYPE_LABELS[item.type]}</span>
           </button>
         ))}
       </div>

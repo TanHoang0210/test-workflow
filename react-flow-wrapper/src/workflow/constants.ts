@@ -1,19 +1,29 @@
 import type { FieldType, WorkflowNodeType } from "./types";
 
-export type FieldMeta = { type: FieldType; label: string; desc: string; icon: string };
+export type FieldCategory = "basic" | "selection" | "advanced";
+export type FieldMeta = { type: FieldType; label: string; desc: string; icon: string; category: FieldCategory };
 
 export const PALETTE: FieldMeta[] = [
-  { type: "text", label: "Text", desc: "Trường nhập văn bản ngắn, một dòng", icon: "T" },
-  { type: "textarea", label: "Textarea", desc: "Trường nhập văn bản dài, nhiều dòng", icon: "¶" },
-  { type: "date", label: "Date", desc: "Chọn ngày, tháng, năm cụ thể", icon: "▦" },
-  { type: "select", label: "Select", desc: "Chọn một giá trị từ danh sách lựa chọn", icon: "☰" },
-  { type: "radio", label: "Radio", desc: "Chọn duy nhất một trong các lựa chọn", icon: "◉" },
-  { type: "checklist", label: "Checklist", desc: "Chọn một hoặc nhiều giá trị từ danh sách", icon: "☑" }
+  { type: "text",        label: "Text",        desc: "Văn bản ngắn, một dòng",        icon: "isax-text",           category: "basic" },
+  { type: "textarea",    label: "Textarea",     desc: "Văn bản dài, nhiều dòng",       icon: "isax-document-text",  category: "basic" },
+  { type: "date",        label: "Date",         desc: "Chọn ngày, tháng, năm",         icon: "isax-calendar",       category: "basic" },
+  { type: "number",      label: "Number",       desc: "Nhập số nguyên hoặc thập phân", icon: "isax-hashtag",        category: "basic" },
+  { type: "select",      label: "Select",       desc: "Dropdown chọn một giá trị",     icon: "isax-arrow-down",     category: "selection" },
+  { type: "radio",       label: "Radio",        desc: "Chọn duy nhất một lựa chọn",    icon: "isax-menu1",          category: "selection" },
+  { type: "checklist",   label: "Checklist",    desc: "Chọn một hoặc nhiều giá trị",   icon: "isax-tick-square",    category: "selection" },
+  { type: "file-upload", label: "File Upload",  desc: "Đính kèm tệp / tải lên",        icon: "isax-document-upload",category: "advanced" },
+  { type: "rating",      label: "Rating",       desc: "Đánh giá sao (1–5)",            icon: "isax-star",           category: "advanced" },
 ];
 
 export const PALETTE_MAP = Object.fromEntries(PALETTE.map((p) => [p.type, p])) as Record<FieldType, FieldMeta>;
 
 export const HAS_OPTIONS: FieldType[] = ["select", "radio", "checklist"];
+
+export const PALETTE_CATEGORIES: { id: FieldCategory; label: string }[] = [
+  { id: "basic",     label: "Basic" },
+  { id: "selection", label: "Selection" },
+  { id: "advanced",  label: "Advanced" },
+];
 
 export const NODE_TYPE_LABELS: Record<WorkflowNodeType, string> = {
   "start-event": "Start",

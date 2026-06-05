@@ -3,7 +3,7 @@ import type { NodeFormData } from "../../workflow/types";
 import type { NodeConfigFormProps } from "./nodeFormTypes";
 import { NodeFormShell } from "../NodeFormShell";
 import { FormBuilder } from "../FormBuilder";
-import { NodeConfigPropertiesEditor } from "../NodeConfigPropertiesEditor";
+import { ExtendedConfigEditor } from "../ExtendedConfigEditor";
 
 export const ActivityNodeForm: React.FC<NodeConfigFormProps> = ({ form, onSave, onClose }) => {
   const [localForm, setLocalForm] = React.useState<NodeFormData>(() => ({
@@ -30,8 +30,9 @@ export const ActivityNodeForm: React.FC<NodeConfigFormProps> = ({ form, onSave, 
       id: "config",
       label: "Cấu hình mở rộng",
       panel: (
-        <NodeConfigPropertiesEditor
+        <ExtendedConfigEditor
           items={localForm.configProperties}
+          fields={localForm.fields}
           onChange={(configProperties) => setLocalForm((p) => ({ ...p, configProperties }))}
         />
       ),

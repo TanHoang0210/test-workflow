@@ -5,11 +5,13 @@ import { NodeTypeGlyph } from "./NodeTypeGlyph";
 
 export type WorkflowSidebarProps = {
   onAddNode: (type: WorkflowNodeType) => void;
+  isOpen: boolean;
+  onClose: () => void;
 };
 
 type TooltipState = { text: string; top: number; left: number } | null;
 
-export const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ onAddNode }) => {
+export const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ onAddNode, isOpen, onClose }) => {
   const [search, setSearch] = React.useState("");
   const [tooltip, setTooltip] = React.useState<TooltipState>(null);
 
@@ -26,9 +28,15 @@ export const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ onAddNode }) =
 
   return (
     <>
-      <aside className="flow-sidebar">
+      <aside className={`flow-sidebar${isOpen ? " flow-sidebar--open" : " flow-sidebar--closed"}`}>
         <div className="flow-sidebar__header">
           <span className="flow-sidebar__header-text">Nodes</span>
+          <button className="flow-sidebar__close" onClick={onClose} title="Đóng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <div className="flow-sidebar__search-wrap">
