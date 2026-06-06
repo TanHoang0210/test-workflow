@@ -4,12 +4,19 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": [
-      "node"
-    ]
+    "types": ["node"],
+    "paths": {
+      "@workflow-engine":   ["./react-flow-wrapper/src/engine.ts"],
+      "@workflow-engine/*": ["./react-flow-wrapper/src/*"]
+    }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "react-flow-wrapper/src/WorkflowEngine.ts",
+    "react-flow-wrapper/src/engine.ts",
+    "react-flow-wrapper/src/adapter/*.ts",
+    "react-flow-wrapper/src/nodes/*.ts",
+    "react-flow-wrapper/src/utils/resolveTemplate.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts"

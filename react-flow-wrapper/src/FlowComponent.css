@@ -1016,6 +1016,46 @@
 
 /* ── Start event — icon-only circle node ──────────────────────────────────── */
 
+.event-node__delete-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.event-node__delete-btn svg {
+  width: 8px;
+  height: 8px;
+  display: block;
+}
+
+.workflow-node--start-event-icon:hover .event-node__delete-btn,
+.workflow-node--end-event-icon:hover .event-node__delete-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.event-node__delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
 .workflow-node--start-event-icon {
   position: relative;
   width: 52px;
