@@ -9,14 +9,21 @@ import {
   signal,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NgClass } from '@angular/common';
 // import { DemoAdapter } from './adapters/demo.adapter'; // dùng khi có backend thật
 import { WorkflowRunner }  from './workflow-runner';
 import type { WorkflowJSON } from './workflow-runner';
 import { MockAdapter }     from '@workflow-engine/adapter/MockAdapter';
 
+export interface ExecLogEntry {
+  level: 'info' | 'success' | 'error' | 'warn' | 'jump' | 'handoff';
+  text: string;
+  time: string;
+}
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, NgClass],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -24,6 +31,7 @@ import { MockAdapter }     from '@workflow-engine/adapter/MockAdapter';
 export class App implements AfterViewInit, OnDestroy {
   protected readonly title = signal('workflow-builder');
   protected saveStatus = signal<'idle' | 'saving' | 'saved'>('idle');
+  protected execLogs = signal<ExecLogEntry[]>([]);
 
   @ViewChild('flowBuilder') flowBuilderRef!: ElementRef;
 
@@ -49,6 +57,15 @@ export class App implements AfterViewInit, OnDestroy {
     this.flowBuilderRef.nativeElement.removeEventListener('workflowSaved', this.onWorkflowSaved);
   }
 
+  protected clearLogs() {
+    this.execLogs.set([]);
+  }
+
+  private addLog(level: ExecLogEntry['level'], text: string) {
+    const entry: ExecLogEntry = { level, text, time: new Date().toLocaleTimeString() };
+    this.execLogs.update(logs => [...logs, entry]);
+  }
+
   // ── Nhận JSON từ builder và chạy workflow ──────────────────────────────
 
   private onWorkflowSaved = (event: CustomEvent) => {
@@ -57,34 +74,55 @@ export class App implements AfterViewInit, OnDestroy {
       if (!payload) return;
 
       this.saveStatus.set('saving');
-      console.log('[App] Workflow JSON received:', payload);
+      this.execLogs.set([]);
+      this.addLog('info', `▶ Bắt đầu chạy workflow (${payload.nodes.length} node)`);
 
       try {
-        // 1. Lưu JSON vào backend
         await this.saveWorkflowToBackend(payload);
 
-        // 2. Tạo runner với adapter và context ban đầu
         const runner = new WorkflowRunner(payload, {
           adapter:    this.adapter,
           workflowId: payload.nodes[0]?.id ?? 'wf-default',
           initialContext: {
-            // Truyền context từ ứng dụng vào
             current_user: { id: 'u1', name: 'Nguyễn Văn A', email: 'a@company.com' },
             app_name:     'VNPT Office',
             started_at:   new Date().toISOString(),
           },
         });
 
-        // 3. Chạy workflow — adapter tự xử lý side effects
         await runner.run();
 
-        // 4. Đọc kết quả từ context sau khi chạy xong
         const ctx = runner.getEngine().getContext();
-        console.log('[App] Workflow completed. Final context:', ctx.variables);
-        console.log('[App] Submission success:', ctx.variables['submit_success']);
+        const status = runner.getEngine().getInstanceStatus();
+
+        // Hiển thị kết quả redirect nếu có
+        const childId = ctx.variables['__child_instance_id'];
+        if (childId) {
+          this.addLog('handoff', `↪ workflow_handoff → new instance: ${childId}  status: ${status}`);
+        }
+
+        // Các biến redirect count
+        const redirectKeys = Object.keys(ctx.variables).filter(k => k.startsWith('__redirect_count_'));
+        for (const k of redirectKeys) {
+          this.addLog('jump', `↩ node_jump  ${k} = ${ctx.variables[k]}`);
+        }
+
+        const lastError = ctx.variables['__last_error'];
+        if (lastError) {
+          this.addLog('error', `✗ Lỗi: ${lastError}`);
+        } else {
+          this.addLog('success', `✓ Workflow hoàn thành  (instance status: ${status})`);
+        }
+
+        // Log toàn bộ biến cuối
+        const varLines = Object.entries(ctx.variables)
+          .map(([k, v]) => `  ${k}: ${JSON.stringify(v)}`)
+          .join('\n');
+        this.addLog('info', `📦 Context cuối:\n${varLines}`);
 
         this.saveStatus.set('saved');
       } catch (err) {
+        this.addLog('error', `✗ ${(err as Error).message}`);
         console.error('[App] Workflow execution error:', err);
         this.saveStatus.set('idle');
       } finally {

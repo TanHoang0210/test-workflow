@@ -11,6 +11,7 @@ import { AttachFileNode }   from '@workflow-engine/nodes/AttachFileNode';
 import { FindRecordsNode }  from '@workflow-engine/nodes/FindRecordsNode';
 import { SubmitNode }       from '@workflow-engine/nodes/SubmitNode';
 import { HistoryLogNode }   from '@workflow-engine/nodes/HistoryLogNode';
+import { RedirectNode }     from '@workflow-engine/nodes/RedirectNode';
 import type { WorkflowAdapter } from '@workflow-engine/adapter/WorkflowAdapter';
 
 // JSON schema trả ra từ builder
@@ -40,6 +41,8 @@ export interface RunOptions {
   initialContext?: Record<string, unknown>;
   /** File đính kèm nếu có node attach-file */
   attachedFiles?: Record<string, File>;
+  /** Optional factory for cross-workflow redirect. Receives definitionId + initialVars. */
+  onTrigger?: (options: { definitionId: string; initialVars?: Record<string, unknown> }) => Promise<{ instanceId: string }>;
 }
 
 export class WorkflowRunner {
@@ -52,6 +55,15 @@ export class WorkflowRunner {
       adapter:        options.adapter,
       workflowId:     options.workflowId,
       initialContext: options.initialContext ?? {},
+      definition:     workflow,
+      onTrigger: options.onTrigger ?? (async (triggerOptions) => {
+        // Host app must supply onTrigger to resolve cross-workflow definitions.
+        // Default: throw so the error propagates to Alert_Error routing.
+        throw new Error(
+          `[WorkflowRunner] Cross-workflow trigger to "${triggerOptions.definitionId}" ` +
+          'requires onTrigger option in RunOptions.',
+        );
+      }),
     });
   }
 
@@ -68,7 +80,22 @@ export class WorkflowRunner {
       if (!node) continue;
 
       this.engine.setCurrentNode(nodeId);
-      await this.executeNode(node, attachedFiles);
+      const result = await this.executeNode(node, attachedFiles);
+
+      // node_jump: restart execution from target node (within same topological order)
+      if (result?.type === 'node_jump') {
+        const targetNode = this.workflow.nodes.find(n => n.id === result.nextNodeId);
+        if (targetNode) {
+          this.engine.setCurrentNode(result.nextNodeId);
+          await this.executeNode(targetNode, attachedFiles);
+        }
+        continue;
+      }
+
+      // workflow_handoff: current instance is done — stop execution
+      if (result?.type === 'workflow_handoff') {
+        break;
+      }
 
       // Dừng lại nếu có lỗi nghiêm trọng và không có fallback
       const lastError = this.engine.getVariable('__last_error');
@@ -85,7 +112,7 @@ export class WorkflowRunner {
   private async executeNode(
     node: WorkflowJSON['nodes'][0],
     files: Record<string, File>,
-  ): Promise<void> {
+  ): Promise<{ type: 'node_jump'; nextNodeId: string } | { type: 'workflow_handoff'; newInstanceId: string; currentInstanceStatus: string } | undefined> {
     const cfg = node.configMap ?? {};
 
     try {
@@ -106,8 +133,12 @@ export class WorkflowRunner {
           if (file) {
             await new AttachFileNode().execute({
               nodeId:       node.id,
+              outputVar:    cfg['outputVar'] || undefined,
               allowedTypes: cfg['allowedTypes'] ? JSON.parse(cfg['allowedTypes']) : undefined,
               maxSizeMB:    cfg['maxSizeMB'] ? Number(cfg['maxSizeMB']) : undefined,
+              multiple:     cfg['multiple'] === 'true',
+              required:     cfg['required'] === 'true',
+              allowDelete:  cfg['allowDelete'] !== 'false',
             }, file, this.engine);
           }
           break;
@@ -143,12 +174,21 @@ export class WorkflowRunner {
           this.engine.setVariable(`form_${node.id}_label`, node.label);
           break;
 
+        case 'redirect':
+          return await new RedirectNode().execute({
+            mode:             (cfg['mode'] as 'node' | 'workflow') ?? 'node',
+            targetNodeId:     cfg['targetNodeId'],
+            maxRedirectCount: cfg['maxRedirectCount'] ? Number(cfg['maxRedirectCount']) : undefined,
+            targetWorkflowId: cfg['targetWorkflowId'],
+            inheritContext:   cfg['inheritContext'] === 'true',
+            params:           cfg['params'] ? JSON.parse(cfg['params']) : undefined,
+            waitForCompletion: cfg['waitForCompletion'] === 'true',
+          }, this.engine);
+
         case 'start-event':
         case 'end-event':
         case 'condition':
         case 'switch':
-        case 'redirect':
-          // Pure logic nodes — không cần adapter
           break;
 
         default:
@@ -158,6 +198,8 @@ export class WorkflowRunner {
       this.engine.setLastError(err);
       console.error(`[WorkflowRunner] Node ${node.id} (${node.type}) failed:`, err);
     }
+
+    return undefined;
   }
 
   // Sắp xếp nodes theo thứ tự thực thi (BFS từ start-event)

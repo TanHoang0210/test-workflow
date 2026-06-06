@@ -1,29 +1,26 @@
 <div class="flow-container">
-  <!--
-    DEFAULT: Hiển thị header built-in
-    <react-flow-builder
-      #flowBuilder
-      [showHeader]="true"
-    ></react-flow-builder>
-  -->
-
-  <!--
-    CUSTOM: Ẩn header built-in và dùng custom handlers
-    Uncomment dòng dưới và comment dòng trên để dùng custom handlers
-  -->
   <react-flow-builder
     #flowBuilder
     [showHeader]="true"
     (onSave)="onSave()"
   ></react-flow-builder>
-  <!-- <button
-    class="save-btn"
-    [class.saving]="saveStatus() === 'saving'"
-    [class.saved]="saveStatus() === 'saved'"
-    (click)="onSave()"
-  >
-    {{ saveStatus() === 'saving' ? 'Đang lưu...' : saveStatus() === 'saved' ? '✓ Đã lưu' : 'Lưu' }}
-  </button> -->
 </div>
+
+@if (execLogs().length > 0) {
+  <div class="exec-panel">
+    <div class="exec-panel__header">
+      <span class="exec-panel__title">Execution Log</span>
+      <button class="exec-panel__clear" (click)="clearLogs()">Xóa</button>
+    </div>
+    <div class="exec-panel__body">
+      @for (entry of execLogs(); track $index) {
+        <div class="exec-log-entry" [ngClass]="'exec-log-entry--' + entry.level">
+          <span style="opacity:0.5">{{ entry.time }}</span>  {{ entry.text }}
+        </div>
+      }
+    </div>
+  </div>
+}
+
 <script type="module" src="/react-flow.js"></script>
 <link rel="stylesheet" href="/react-flow-wrapper.css" />

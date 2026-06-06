@@ -49,6 +49,8 @@ import { ConditionNodeForm } from "./components/forms/ConditionNodeForm";
 import { EndEventNodeForm } from "./components/forms/EndEventNodeForm";
 import { NotificationNodeForm } from "./components/forms/NotificationNodeForm";
 import { SwitchNodeFormAdapter } from "./components/forms/SwitchNodeFormAdapter";
+import { RedirectNodeForm }    from "./components/forms/RedirectNodeForm";
+import { AttachFileNodeForm }  from "./components/forms/AttachFileNodeForm";
 import type { NodeConfigFormProps } from "./components/forms/nodeFormTypes";
 
 /** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
@@ -518,6 +520,8 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
       condition: ConditionNodeForm,
       notification: NotificationNodeForm,
       switch: SwitchNodeFormAdapter,
+      redirect: RedirectNodeForm,
+      "attach-file": AttachFileNodeForm,
     }),
     []
   );

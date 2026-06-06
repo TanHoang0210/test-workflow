@@ -44,3 +44,72 @@ react-flow-builder {
 .save-btn.saved {
   background: #16a34a;
 }
+
+/* Execution log panel */
+.exec-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: monospace;
+  font-size: 12px;
+  border-top: 2px solid #313244;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.exec-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+
+.exec-panel__title {
+  font-weight: bold;
+  color: #89b4fa;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.exec-panel__clear {
+  background: none;
+  border: 1px solid #45475a;
+  color: #a6adc8;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.exec-panel__clear:hover {
+  background: #313244;
+}
+
+.exec-panel__body {
+  overflow-y: auto;
+  padding: 8px 12px;
+  flex: 1;
+}
+
+.exec-log-entry {
+  padding: 3px 0;
+  border-bottom: 1px solid #1e1e2e;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.exec-log-entry--info    { color: #89b4fa; }
+.exec-log-entry--success { color: #a6e3a1; }
+.exec-log-entry--error   { color: #f38ba8; }
+.exec-log-entry--warn    { color: #fab387; }
+.exec-log-entry--jump    { color: #cba6f7; }
+.exec-log-entry--handoff { color: #f9e2af; }
