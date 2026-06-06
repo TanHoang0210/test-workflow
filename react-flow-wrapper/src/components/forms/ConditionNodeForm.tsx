@@ -155,7 +155,7 @@ const BranchCard: React.FC<{
     onChange({ rules: [...branch.rules, makeRule()] });
 
   return (
-    <div className="cn-branch">
+    <div className="cn-branch" style={{ borderLeft: `3px solid ${branch.color}` }}>
       {/* Branch header */}
       <div className="cn-branch__head">
         <input
@@ -164,77 +164,91 @@ const BranchCard: React.FC<{
           value={branch.color}
           onChange={(e) => onChange({ color: e.target.value })}
           title="Màu nhánh"
+          style={{ accentColor: branch.color }}
         />
         <input
           className="cn-branch__name"
           value={branch.name}
           onChange={(e) => onChange({ name: e.target.value })}
-          placeholder="Tên nhánh"
+          placeholder="Tên nhánh..."
         />
         <input
           className="cn-branch__label"
           value={branch.label}
           onChange={(e) => onChange({ label: e.target.value })}
-          placeholder="#nhãn"
+          placeholder="nhãn"
         />
         <div className="cn-branch__actions">
           <button type="button" className="cn-branch__move" onClick={() => onMove(-1)} disabled={index === 0} title="Lên">↑</button>
           <button type="button" className="cn-branch__move" onClick={() => onMove(1)} disabled={index === total - 1} title="Xuống">↓</button>
-          <button type="button" className="cn-branch__del" onClick={onDelete} title="Xóa nhánh">🗑</button>
+          <button type="button" className="cn-branch__del" onClick={onDelete} title="Xóa nhánh">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" width="11" height="11">
+              <polyline points="2,3 10,3" /><path d="M4,3V2h4v1" /><path d="M3,3l.7,7h4.6L9,3" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Logic type */}
-      <div className="cn-branch__logic">
-        <span className="cn-branch__logic-label">Quy tắc logic</span>
-        {(["AND", "OR", "CUSTOM"] as LogicType[]).map((lt) => (
-          <button
-            key={lt}
-            type="button"
-            className={`cn-branch__logic-btn${branch.logicType === lt ? " cn-branch__logic-btn--active" : ""}`}
-            onClick={() => onChange({ logicType: lt })}
-          >
-            {lt}
-          </button>
-        ))}
-      </div>
-
-      {/* Rules */}
-      {branch.logicType !== "CUSTOM" ? (
-        <div className="cn-branch__rules">
-          {branch.rules.map((rule) => (
-            <RuleRow
-              key={rule.id}
-              rule={rule}
-              onChange={(patch) => updateRule(rule.id, patch)}
-              onDelete={() => deleteRule(rule.id)}
-              canDelete={branch.rules.length > 1}
-            />
-          ))}
-          <button type="button" className="cn-branch__add-rule" onClick={addRule}>
-            + Thêm quy tắc
-          </button>
+      {/* Card body */}
+      <div className="cn-branch__body">
+        {/* Logic type */}
+        <div className="cn-branch__logic">
+          <span className="cn-branch__logic-label">QUY TẮC LOGIC</span>
+          <div className="cn-branch__logic-group">
+            {(["AND", "OR", "CUSTOM"] as LogicType[]).map((lt) => (
+              <button
+                key={lt}
+                type="button"
+                className={`cn-branch__logic-btn${branch.logicType === lt ? " cn-branch__logic-btn--active" : ""}`}
+                onClick={() => onChange({ logicType: lt })}
+              >
+                {lt}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <textarea
-          className="cn-branch__custom-expr"
-          value={branch.customExpression}
-          onChange={(e) => onChange({ customExpression: e.target.value })}
-          rows={2}
-          placeholder='Biểu thức tùy chỉnh, ví dụ: {{age}} > 18 && {{status}} == "active"'
-        />
-      )}
 
-      {/* Description */}
-      <div className="cn-branch__desc-wrap">
-        <label className="cn-branch__desc-label">Mô tả nghiệp vụ</label>
-        <textarea
-          className="cn-branch__desc"
-          rows={2}
-          value={branch.description}
-          onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="Giải thích điều kiện để người đọc hiểu nghiệp vụ..."
-        />
+        {/* Rules */}
+        {branch.logicType !== "CUSTOM" ? (
+          <div className="cn-branch__rules">
+            {branch.rules.map((rule, ri) => (
+              <React.Fragment key={rule.id}>
+                {ri > 0 && (
+                  <div className="cn-rule-connector">{branch.logicType}</div>
+                )}
+                <RuleRow
+                  rule={rule}
+                  onChange={(patch) => updateRule(rule.id, patch)}
+                  onDelete={() => deleteRule(rule.id)}
+                  canDelete={branch.rules.length > 1}
+                />
+              </React.Fragment>
+            ))}
+            <button type="button" className="cn-branch__add-rule" onClick={addRule}>
+              + Thêm điều kiện
+            </button>
+          </div>
+        ) : (
+          <textarea
+            className="cn-branch__custom-expr"
+            value={branch.customExpression}
+            onChange={(e) => onChange({ customExpression: e.target.value })}
+            rows={3}
+            placeholder='Biểu thức tùy chỉnh, ví dụ: {{age}} > 18 && {{status}} == "active"'
+          />
+        )}
+
+        {/* Description */}
+        <div className="cn-branch__desc-wrap">
+          <label className="cn-branch__desc-label">MÔ TẢ NGHIỆP VỤ</label>
+          <textarea
+            className="cn-branch__desc"
+            rows={2}
+            value={branch.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+            placeholder="Giải thích điều kiện để người đọc hiểu nghiệp vụ..."
+          />
+        </div>
       </div>
     </div>
   );

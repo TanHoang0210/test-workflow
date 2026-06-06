@@ -32,7 +32,9 @@
       "Bash(grep -E \"\\\\.\\(css|scss\\)$\")",
       "Bash(pkill -f \"vite\")",
       "Bash(screencapture -x /tmp/ai-footer-new.png)",
-      "Bash(pkill -f \"npm run dev\")"
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(cp dist/react-flow.iife.js ../public/react-flow.js)",
+      "Bash(cp dist/workflow-builder-widget.css ../public/react-flow-wrapper.css)"
     ]
   }
 }
