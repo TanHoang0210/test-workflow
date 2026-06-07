@@ -11,7 +11,7 @@ import {
   type XYPosition
 } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
-import { ArrowRotateLeft, ArrowRotateRight } from "vuesax-icons-react";
+import { ArrowRotateLeft, ArrowRotateRight, FolderOpen } from "vuesax-icons-react";
 import wflogo from "../public/wflogo.png";
 import "reactflow/dist/style.css";
 import "./FlowComponent.css";
@@ -53,16 +53,33 @@ import { RedirectNodeForm }    from "./components/forms/RedirectNodeForm";
 import { AttachFileNodeForm }  from "./components/forms/AttachFileNodeForm";
 import { ViewSignNodeForm }    from "./components/forms/ViewSignNodeForm";
 import type { NodeConfigFormProps } from "./components/forms/nodeFormTypes";
+import { SaveWorkflowModal, type SaveWorkflowMeta } from "./components/SaveWorkflowModal";
+
+/** Mục trong danh sách quy trình đã lưu (hiển thị trong dropdown "Mở quy trình"). */
+export type WorkflowListItem = {
+  id: string;
+  code: string | null;
+  name: string;
+  description?: string | null;
+  updated_at?: string;
+};
 
 /** Props khi dùng qua web component (Angular: (workflowSaved)=...) */
 export type FlowWidgetProps = {
   saveTrigger?: number; // legacy — prefer dispatching "requestSave" event on the element
   showHeader?: boolean; // show/hide header with controls
-  onSave?: () => void; // custom save handler
+  onSave?: () => void; // optional notification hook — fires after the built-in "Lưu quy trình" modal is confirmed (the modal + payload building always run inside the widget; listen for "workflowSaved" to receive { json, payload, meta })
   onImport?: () => void; // custom import handler
   onExport?: () => void; // custom export handler
   onUndo?: () => void; // custom undo handler
   onRedo?: () => void; // custom redo handler
+  /** Gọi khi user mở dropdown "Mở quy trình" — host trả về danh sách quy trình đã lưu (gọi API list). */
+  onOpenWorkflowList?: () => Promise<WorkflowListItem[]>;
+  /** Gọi khi user chọn 1 quy trình trong danh sách — host gọi API lấy chi tiết, trả về định nghĩa (để nạp lên canvas)
+   *  kèm theo mã/tên/mô tả (để điền sẵn vào form "Lưu quy trình" cho lần lưu/cập nhật tiếp theo). */
+  onSelectWorkflow?: (
+    id: string
+  ) => Promise<{ payload: WorkflowPersistPayloadV1; meta: SaveWorkflowMeta } | null>;
 };
 
 const FlowComponent: React.FC<FlowWidgetProps> = ({
@@ -72,7 +89,9 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
   onImport: customOnImport,
   onExport: customOnExport,
   onUndo: customOnUndo,
-  onRedo: customOnRedo
+  onRedo: customOnRedo,
+  onOpenWorkflowList: customOnOpenWorkflowList,
+  onSelectWorkflow: customOnSelectWorkflow
 }) => {
   const idRef = React.useRef(4);
   const configureNodeRef = React.useRef<(id: string) => void>(() => {});
@@ -172,16 +191,38 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
   const prevSaveTriggerRef = React.useRef<number | undefined>(undefined);
 
   const emitWorkflowSaved = React.useCallback(
-    (payload: WorkflowPersistPayloadV1, json: string) => {
+    (payload: WorkflowPersistPayloadV1, json: string, meta?: SaveWorkflowMeta) => {
       flowRootRef.current?.dispatchEvent(
         new CustomEvent("workflowSaved", {
-          detail: { json, payload },
+          detail: { json, payload, meta },
           bubbles: true,
           composed: true
         })
       );
     },
     []
+  );
+
+  const [showSaveModal, setShowSaveModal] = React.useState(false);
+  // Mã/tên/mô tả của quy trình đang mở — dùng để điền sẵn vào form "Lưu quy trình" khi cập nhật.
+  const [currentWorkflowMeta, setCurrentWorkflowMeta] = React.useState<SaveWorkflowMeta | null>(null);
+
+  const handleConfirmSaveModal = React.useCallback(
+    (meta: SaveWorkflowMeta) => {
+      setShowSaveModal(false);
+      const { nodes: ns, edges: es } = graphStateRef.current;
+      const payload = buildWorkflowPayloadV1(ns, es);
+      const json = JSON.stringify(payload, null, 2);
+      try {
+        localStorage.setItem(WORKFLOW_STORAGE_KEY, json);
+      } catch {
+        /* ignore */
+      }
+      emitWorkflowSaved(payload, json, meta);
+      setCurrentWorkflowMeta(meta);
+      customOnSave?.();
+    },
+    [emitWorkflowSaved, customOnSave]
   );
 
   React.useEffect(() => {
@@ -568,6 +609,76 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const loadPayloadIntoCanvas = React.useCallback(
+    (payload: WorkflowPersistPayloadV1) => {
+      const ns = hydrateWorkflowNodes(payload.nodes, makeNodeData);
+      const es = hydrateWorkflowEdges(payload.edges, deleteEdgeRef.current);
+      setNodes(ns);
+      setEdges(es);
+      idRef.current = computeNextNodeIdFromPersisted(payload.nodes);
+    },
+    [makeNodeData, setNodes, setEdges]
+  );
+
+  // ── Dropdown "Mở quy trình" — load danh sách + nạp quy trình đã chọn lên canvas ──
+  const [showWorkflowMenu, setShowWorkflowMenu] = React.useState(false);
+  const [workflowList, setWorkflowList] = React.useState<WorkflowListItem[] | null>(null);
+  const [loadingWorkflowList, setLoadingWorkflowList] = React.useState(false);
+  const [loadingWorkflowId, setLoadingWorkflowId] = React.useState<string | null>(null);
+  const workflowMenuRef = React.useRef<HTMLDivElement | null>(null);
+
+  const handleToggleWorkflowMenu = React.useCallback(() => {
+    if (!customOnOpenWorkflowList) return;
+    setShowWorkflowMenu((open) => {
+      const next = !open;
+      if (next && !workflowList && !loadingWorkflowList) {
+        setLoadingWorkflowList(true);
+        customOnOpenWorkflowList()
+          .then((list) => setWorkflowList(Array.isArray(list) ? list : []))
+          .catch((err) => {
+            console.error("Failed to load workflow list:", err);
+            setWorkflowList([]);
+          })
+          .finally(() => setLoadingWorkflowList(false));
+      }
+      return next;
+    });
+  }, [customOnOpenWorkflowList, workflowList, loadingWorkflowList]);
+
+  const handlePickWorkflow = React.useCallback(
+    (id: string) => {
+      if (!customOnSelectWorkflow || loadingWorkflowId) return;
+      setLoadingWorkflowId(id);
+      customOnSelectWorkflow(id)
+        .then((result) => {
+          if (!result) {
+            alert("Không tải được quy trình đã chọn");
+            return;
+          }
+          loadPayloadIntoCanvas(result.payload);
+          setCurrentWorkflowMeta(result.meta);
+          setShowWorkflowMenu(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load workflow:", err);
+          alert("Không tải được quy trình đã chọn");
+        })
+        .finally(() => setLoadingWorkflowId(null));
+    },
+    [customOnSelectWorkflow, loadingWorkflowId, loadPayloadIntoCanvas]
+  );
+
+  React.useEffect(() => {
+    if (!showWorkflowMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (workflowMenuRef.current && !workflowMenuRef.current.contains(e.target as Node)) {
+        setShowWorkflowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showWorkflowMenu]);
+
   const handleImport = React.useCallback(() => {
     if (customOnImport) {
       customOnImport();
@@ -585,11 +696,7 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
           const json = event.target?.result as string;
           const payload = parseWorkflowPayload(json);
           if (!payload) throw new Error("Invalid payload");
-          const ns = hydrateWorkflowNodes(payload.nodes, makeNodeData);
-          const es = hydrateWorkflowEdges(payload.edges, deleteEdgeRef.current);
-          setNodes(ns);
-          setEdges(es);
-          idRef.current = computeNextNodeIdFromPersisted(payload.nodes);
+          loadPayloadIntoCanvas(payload);
         } catch (err) {
           console.error("Failed to import workflow:", err);
           alert("Invalid workflow file");
@@ -598,23 +705,10 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
       reader.readAsText(file);
     };
     input.click();
-  }, [customOnImport, makeNodeData, setNodes, setEdges]);
+  }, [customOnImport, loadPayloadIntoCanvas]);
 
   const handleSave = () => {
-    if (customOnSave) {
-      customOnSave();
-      return;
-    }
-    const { nodes: ns, edges: es } = graphStateRef.current;
-    const payload = buildWorkflowPayloadV1(ns, es);
-    const json = JSON.stringify(payload, null, 2);
-    try {
-      localStorage.setItem(WORKFLOW_STORAGE_KEY, json);
-      alert("Workflow saved successfully!");
-    } catch {
-      alert("Failed to save workflow");
-    }
-    emitWorkflowSaved(payload, json);
+    setShowSaveModal(true);
   };
 
   return (
@@ -642,6 +736,47 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
             <div className="flow-header__separator"></div>
           </div>
           <div className="flow-header__right">
+            {customOnOpenWorkflowList && (
+              <div className="flow-header__dropdown" ref={workflowMenuRef}>
+                <button
+                  className="flow-header__btn"
+                  onClick={handleToggleWorkflowMenu}
+                  title="Mở quy trình đã lưu"
+                >
+                  <FolderOpen size={16} />
+                  Mở quy trình
+                </button>
+                {showWorkflowMenu && (
+                  <div className="flow-header__dropdown-menu">
+                    {loadingWorkflowList && (
+                      <div className="flow-header__dropdown-empty">Đang tải danh sách…</div>
+                    )}
+                    {!loadingWorkflowList && workflowList && workflowList.length === 0 && (
+                      <div className="flow-header__dropdown-empty">Chưa có quy trình nào được lưu</div>
+                    )}
+                    {!loadingWorkflowList &&
+                      workflowList?.map((wf) => (
+                        <button
+                          key={wf.id}
+                          className="flow-header__dropdown-item"
+                          onClick={() => handlePickWorkflow(wf.id)}
+                          disabled={loadingWorkflowId !== null}
+                        >
+                          <span className="flow-header__dropdown-item-name">
+                            {wf.name || "(Không tên)"}
+                          </span>
+                          {wf.code && (
+                            <span className="flow-header__dropdown-item-code">{wf.code}</span>
+                          )}
+                          {loadingWorkflowId === wf.id && (
+                            <span className="flow-header__dropdown-item-loading">Đang tải…</span>
+                          )}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
             <button className="flow-header__btn flow-header__btn--save" onClick={handleSave}>
               Save
             </button>
@@ -737,6 +872,14 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
           />
         );
       })()}
+
+      {showSaveModal && (
+        <SaveWorkflowModal
+          initial={currentWorkflowMeta ?? undefined}
+          onConfirm={handleConfirmSaveModal}
+          onCancel={() => setShowSaveModal(false)}
+        />
+      )}
 
     </div>
   );

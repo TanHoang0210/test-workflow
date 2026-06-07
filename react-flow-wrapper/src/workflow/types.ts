@@ -39,6 +39,23 @@ export type FormField = {
   validation?: FieldValidation;
   defaultValue?: FieldDefaultValue;
   conditionalVisibility?: FieldConditionalVisibility | null;
+  /** Độ rộng hiển thị của trường, tính theo % chiều ngang form (25 | 33 | 50 | 66 | 75 | 100) */
+  width?: number;
+};
+
+export type FormButtonType = "submit" | "cancel";
+
+export type FormButton = {
+  id: string;
+  type: FormButtonType;
+  label: string;
+};
+
+export type FormButtonsLayout = "left" | "center" | "right";
+
+export type FormButtonsConfig = {
+  items: FormButton[];
+  layout: FormButtonsLayout;
 };
 
 export type ConfigPropertySource = "fixed" | "variable" | "previous" | "expression";
@@ -60,6 +77,7 @@ export type NodeFormData = {
   routingCondition?: string;
   fields: FormField[];
   configProperties: NodeConfigProperty[];
+  buttons?: FormButtonsConfig;
 };
 
 export type WorkflowNodeType =
@@ -111,6 +129,7 @@ export type WorkflowPersistPayloadV1 = {
     routingCondition?: string;
     branchConditions?: Record<string, string>;
     fields: FormField[];
+    buttons?: FormButtonsConfig;
     configProperties?: Array<{
       id?: string;
       displayName?: string;

@@ -1,6 +1,6 @@
 import React from "react";
 import type {
-  FieldType, FormField,
+  FieldType, FormField, FormButton, FormButtonsConfig, FormButtonType,
   FieldValidation, FieldDefaultValue, FieldConditionalVisibility
 } from "../workflow/types";
 import { HAS_OPTIONS, PALETTE, PALETTE_CATEGORIES } from "../workflow/constants";
@@ -28,7 +28,15 @@ function makeField(type: FieldType): FormField {
     validation: { type: null },
     defaultValue: { source: "fixed", value: "" },
     conditionalVisibility: null,
+    width: 100,
   };
+}
+
+const WIDTH_PRESETS = [25, 33, 50, 66, 75, 100];
+
+function snapWidth(value: number) {
+  const clamped = Math.max(20, Math.min(100, value));
+  return WIDTH_PRESETS.reduce((closest, p) => (Math.abs(p - clamped) < Math.abs(closest - clamped) ? p : closest), WIDTH_PRESETS[0]);
 }
 
 // ── Field type icon ────────────────────────────────────────────────────────
@@ -52,45 +60,82 @@ const FieldCard: React.FC<{
   onDelete: () => void;
   onDragStart: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
-  isDropTarget: boolean;
-}> = ({ field, selected, onClick, onDuplicate, onDelete, onDragStart, onDragOver, isDropTarget }) => {
+  onResize: (width: number) => void;
+  dropIndicator: "before" | "after" | null;
+}> = ({ field, selected, onClick, onDuplicate, onDelete, onDragStart, onDragOver, onResize, dropIndicator }) => {
   const meta = PALETTE.find((p) => p.type === field.type);
+  const width = field.width ?? 100;
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const cell = (e.currentTarget as HTMLElement).closest(".ffb-cell") as HTMLElement | null;
+    const canvas = (e.currentTarget as HTMLElement).closest(".ffb-canvas2") as HTMLElement | null;
+    if (!cell || !canvas) return;
+    const canvasWidth = canvas.clientWidth;
+    const startX = e.clientX;
+    const startWidthPx = cell.getBoundingClientRect().width;
+
+    const onMove = (ev: MouseEvent) => {
+      const deltaPx = ev.clientX - startX;
+      const pct = ((startWidthPx + deltaPx) / canvasWidth) * 100;
+      onResize(snapWidth(pct));
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   return (
     <div
-      className={`ffb-card${selected ? " ffb-card--selected" : ""}${isDropTarget ? " ffb-card--drop" : ""}`}
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onClick={onClick}
+      className={`ffb-cell${dropIndicator ? ` ffb-cell--drop-${dropIndicator}` : ""}`}
+      style={{ width: `${width}%` }}
     >
-      <div className="ffb-card__icon-wrap">
-        <FieldIcon type={field.type} />
-      </div>
-      <div className="ffb-card__body">
-        <div className="ffb-card__top">
-          <span className="ffb-card__label">{field.label || `(${meta?.label})`}</span>
-          {field.key && <span className="ffb-card__key">{`{{${field.key}}}`}</span>}
+      <div
+        className={`ffb-card${selected ? " ffb-card--selected" : ""}`}
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onClick={onClick}
+      >
+        <div className="ffb-card__icon-wrap">
+          <FieldIcon type={field.type} />
         </div>
-        <div className="ffb-card__badges">
-          {field.required && <span className="ffb-badge ffb-badge--required">Required</span>}
-          {field.validation?.type === "email" && <span className="ffb-badge ffb-badge--info">Email</span>}
-          {field.validation?.type === "phone" && <span className="ffb-badge ffb-badge--info">Phone</span>}
-          {field.validation?.type === "regex" && <span className="ffb-badge ffb-badge--info">Regex</span>}
-          {field.validation?.maxLength && <span className="ffb-badge ffb-badge--neutral">Max: {field.validation.maxLength}</span>}
-          {field.readOnly && <span className="ffb-badge ffb-badge--neutral">Read-only</span>}
-          {field.conditionalVisibility && <span className="ffb-badge ffb-badge--cond">Conditional</span>}
-          {!field.required && !field.validation?.type && !field.conditionalVisibility && (
-            <span className="ffb-badge ffb-badge--opt">Optional</span>
+        <div className="ffb-card__body">
+          <div className="ffb-card__top">
+            <span className="ffb-card__label">{field.label || `(${meta?.label})`}</span>
+            {field.key && <span className="ffb-card__key">{`{{${field.key}}}`}</span>}
+            <span className="ffb-card__width">{width}%</span>
+          </div>
+          <div className="ffb-card__badges">
+            {field.required && <span className="ffb-badge ffb-badge--required">Required</span>}
+            {field.validation?.type === "email" && <span className="ffb-badge ffb-badge--info">Email</span>}
+            {field.validation?.type === "phone" && <span className="ffb-badge ffb-badge--info">Phone</span>}
+            {field.validation?.type === "regex" && <span className="ffb-badge ffb-badge--info">Regex</span>}
+            {field.validation?.maxLength && <span className="ffb-badge ffb-badge--neutral">Max: {field.validation.maxLength}</span>}
+            {field.readOnly && <span className="ffb-badge ffb-badge--neutral">Read-only</span>}
+            {field.conditionalVisibility && <span className="ffb-badge ffb-badge--cond">Conditional</span>}
+            {!field.required && !field.validation?.type && !field.conditionalVisibility && (
+              <span className="ffb-badge ffb-badge--opt">Optional</span>
+            )}
+          </div>
+          {field.placeholder && (
+            <p className="ffb-card__placeholder">Placeholder: "{field.placeholder}"</p>
           )}
         </div>
-        {field.placeholder && (
-          <p className="ffb-card__placeholder">Placeholder: "{field.placeholder}"</p>
-        )}
-      </div>
-      <div className="ffb-card__actions" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="ffb-card__btn" onClick={onDuplicate} title="Nhân bản">⧉</button>
-        <button type="button" className="ffb-card__btn ffb-card__btn--del" onClick={onDelete} title="Xóa">✕</button>
+        <div className="ffb-card__actions" onClick={(e) => e.stopPropagation()}>
+          <button type="button" className="ffb-card__btn" onClick={onDuplicate} title="Nhân bản">⧉</button>
+          <button type="button" className="ffb-card__btn ffb-card__btn--del" onClick={onDelete} title="Xóa">✕</button>
+        </div>
+        <div
+          className="ffb-card__resize"
+          onMouseDown={handleResizeStart}
+          onClick={(e) => e.stopPropagation()}
+          title="Kéo để chỉnh độ rộng — 2 trường 50% sẽ nằm cùng 1 hàng"
+        />
       </div>
     </div>
   );
@@ -174,6 +219,17 @@ const FieldProperties: React.FC<{
         <textarea className="ffb-input ffb-input--ta" rows={2} value={field.description ?? ""}
           onChange={(e) => onChange({ description: e.target.value })}
           placeholder="Gợi ý để người dùng hiểu cách điền..." />
+
+        <label className="ffb-field-label">Độ rộng trường (% chiều ngang form)</label>
+        <div className="ffb-width-presets">
+          {WIDTH_PRESETS.map((w) => (
+            <button key={w} type="button"
+              className={`ffb-width-btn${(field.width ?? 100) === w ? " ffb-width-btn--active" : ""}`}
+              onClick={() => onChange({ width: w })}>
+              {w}%
+            </button>
+          ))}
+        </div>
 
         {HAS_OPTIONS.includes(field.type) && (
           <>
@@ -300,14 +356,99 @@ const FieldProperties: React.FC<{
   );
 };
 
+// ── Buttons Config Editor ─────────────────────────────────────────────────
+
+const BUTTON_LAYOUTS: { id: FormButtonsConfig["layout"]; label: string }[] = [
+  { id: "left", label: "Trái" },
+  { id: "center", label: "Giữa" },
+  { id: "right", label: "Phải" },
+];
+
+const FormButtonsEditor: React.FC<{
+  config: FormButtonsConfig;
+  onChange: (config: FormButtonsConfig) => void;
+}> = ({ config, onChange }) => {
+  const addButton = (type: FormButtonType) =>
+    onChange({
+      ...config,
+      items: [...config.items, { id: uid("btn"), type, label: type === "submit" ? "Gửi" : "Hủy" }],
+    });
+
+  const updateButton = (id: string, patch: Partial<FormButton>) =>
+    onChange({ ...config, items: config.items.map((b) => (b.id === id ? { ...b, ...patch } : b)) });
+
+  const removeButton = (id: string) =>
+    onChange({ ...config, items: config.items.filter((b) => b.id !== id) });
+
+  return (
+    <div className="ffb-buttons">
+      <div className="ffb-buttons__head">
+        <span className="ffb-buttons__title">Nút thao tác</span>
+      </div>
+      <p className="ffb-buttons__hint">Nút sẽ hiển thị ở cuối khu vực thiết kế form bên trái.</p>
+
+      <div className="ffb-buttons__list">
+        {config.items.map((b) => (
+          <div key={b.id} className="ffb-buttons__row">
+            <select className="ffb-input ffb-buttons__type" value={b.type}
+              onChange={(e) => updateButton(b.id, { type: e.target.value as FormButtonType })}>
+              <option value="submit">Gửi (Submit)</option>
+              <option value="cancel">Hủy (Cancel)</option>
+            </select>
+            <input className="ffb-input ffb-buttons__label" value={b.label}
+              onChange={(e) => updateButton(b.id, { label: e.target.value })}
+              placeholder="Nhãn nút..." />
+            <button type="button" className="ffb-buttons__del" onClick={() => removeButton(b.id)} title="Xóa nút">✕</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="ffb-buttons__add">
+        <button type="button" className="ffb-add-opt" onClick={() => addButton("submit")}>+ Thêm nút Gửi</button>
+        <button type="button" className="ffb-add-opt" onClick={() => addButton("cancel")}>+ Thêm nút Hủy</button>
+      </div>
+
+      <label className="ffb-field-label" style={{ marginTop: 10 }}>Vị trí nút</label>
+      <div className="ffb-buttons__layout">
+        {BUTTON_LAYOUTS.map((l) => (
+          <button key={l.id} type="button"
+            className={`ffb-layout-btn${config.layout === l.id ? " ffb-layout-btn--active" : ""}`}
+            onClick={() => onChange({ ...config, layout: l.id })}>
+            {l.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── Buttons Preview (rendered inside the form-design canvas) ──────────────
+
+const FormButtonsPreview: React.FC<{ config: FormButtonsConfig }> = ({ config }) => {
+  if (config.items.length === 0) return null;
+  return (
+    <div className="ffb-canvas2__buttons">
+      <div className={`ffb-buttons__preview ffb-buttons__preview--${config.layout}`}>
+        {config.items.map((b) => (
+          <span key={b.id} className={`ffb-buttons__chip ffb-buttons__chip--${b.type}`}>
+            {b.label || (b.type === "submit" ? "Gửi" : "Hủy")}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── Main FormBuilder ───────────────────────────────────────────────────────
 
 type Props = {
   fields: FormField[];
   onChangeFields: (fields: FormField[]) => void;
+  buttons: FormButtonsConfig;
+  onChangeButtons: (buttons: FormButtonsConfig) => void;
 };
 
-export const FormBuilder: React.FC<Props> = ({ fields, onChangeFields }) => {
+export const FormBuilder: React.FC<Props> = ({ fields, onChangeFields, buttons, onChangeButtons }) => {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [dragPayload, setDragPayload] = React.useState<string | null>(null);
   const [dropIndex, setDropIndex] = React.useState<number | null>(null);
@@ -366,7 +507,7 @@ export const FormBuilder: React.FC<Props> = ({ fields, onChangeFields }) => {
   const handleCanvasDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setCanvasOver(true);
-    if (dropIndex === null) setDropIndex(fields.length);
+    setDropIndex(fields.length);
   };
 
   const handleCanvasDragLeave = (e: React.DragEvent) => {
@@ -383,6 +524,24 @@ export const FormBuilder: React.FC<Props> = ({ fields, onChangeFields }) => {
     if (payload?.startsWith("palette:")) insertField(payload.replace("palette:", "") as FieldType, at);
     else if (payload?.startsWith("field:")) reorderField(payload.replace("field:", ""), at);
     setCanvasOver(false); setDropIndex(null); setDragPayload(null);
+  };
+
+  // Khi rê chuột ngang qua 1 field: nửa trái → chèn trước, nửa phải → chèn sau
+  // (cho phép xếp các trường cạnh nhau cùng 1 hàng theo độ rộng %)
+  const handleCardDragOver = (e: React.DragEvent, idx: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const isLeftHalf = e.clientX - rect.left < rect.width / 2;
+    setDropIndex(isLeftHalf ? idx : idx + 1);
+    setCanvasOver(true);
+  };
+
+  const dropIndicatorFor = (idx: number): "before" | "after" | null => {
+    if (!canvasOver || dropIndex === null) return null;
+    if (dropIndex === idx) return "before";
+    if (dropIndex === idx + 1 && idx === fields.length - 1) return "after";
+    return null;
   };
 
   return (
@@ -432,39 +591,31 @@ export const FormBuilder: React.FC<Props> = ({ fields, onChangeFields }) => {
               <p>Drop a new field here</p>
             </div>
           ) : (
-            <>
-              {fields.map((field, idx) => (
-                <React.Fragment key={field.id}>
-                  <div className={`ffb-drop-zone${dropIndex === idx && canvasOver ? " ffb-drop-zone--active" : ""}`}
-                    onDragOver={(e) => { e.stopPropagation(); e.preventDefault(); setDropIndex(idx); setCanvasOver(true); }}
-                  />
-                  <FieldCard
-                    field={field}
-                    selected={selectedId === field.id}
-                    onClick={() => setSelectedId(field.id === selectedId ? null : field.id)}
-                    onDuplicate={() => duplicateField(field.id)}
-                    onDelete={() => removeField(field.id)}
-                    isDropTarget={dropIndex === idx && canvasOver}
-                    onDragOver={(e) => { e.stopPropagation(); e.preventDefault(); setDropIndex(idx); setCanvasOver(true); }}
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", `field:${field.id}`);
-                      e.dataTransfer.effectAllowed = "move";
-                      setDragPayload(`field:${field.id}`);
-                    }}
-                  />
-                </React.Fragment>
-              ))}
-              <div className={`ffb-drop-zone${dropIndex === fields.length && canvasOver ? " ffb-drop-zone--active" : ""}`}
-                onDragOver={(e) => { e.stopPropagation(); e.preventDefault(); setDropIndex(fields.length); setCanvasOver(true); }}
-              >
-                <span>⊕ Drop a new field here</span>
-              </div>
-            </>
+            fields.map((field, idx) => (
+              <FieldCard
+                key={field.id}
+                field={field}
+                selected={selectedId === field.id}
+                onClick={() => setSelectedId(field.id === selectedId ? null : field.id)}
+                onDuplicate={() => duplicateField(field.id)}
+                onDelete={() => removeField(field.id)}
+                dropIndicator={dropIndicatorFor(idx)}
+                onDragOver={(e) => handleCardDragOver(e, idx)}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", `field:${field.id}`);
+                  e.dataTransfer.effectAllowed = "move";
+                  setDragPayload(`field:${field.id}`);
+                }}
+                onResize={(width) => updateField(field.id, { width })}
+              />
+            ))
           )}
         </div>
+
+        <FormButtonsPreview config={buttons} />
       </div>
 
-      {/* Right: Properties */}
+      {/* Right: Properties / Buttons config */}
       {selectedField ? (
         <FieldProperties
           field={selectedField}
@@ -473,9 +624,7 @@ export const FormBuilder: React.FC<Props> = ({ fields, onChangeFields }) => {
           onClose={() => setSelectedId(null)}
         />
       ) : (
-        <div className="ffb-props ffb-props--empty">
-          <p>Click a field to configure</p>
-        </div>
+        <FormButtonsEditor config={buttons} onChange={onChangeButtons} />
       )}
     </div>
   );

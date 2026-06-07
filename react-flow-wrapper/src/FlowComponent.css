@@ -186,6 +186,86 @@
   border-color: #0f172a;
 }
 
+.flow-header__dropdown {
+  position: relative;
+}
+
+.flow-header__dropdown .flow-header__btn {
+  gap: 6px;
+}
+
+.flow-header__dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 240px;
+  max-width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  z-index: 50;
+}
+
+.flow-header__dropdown-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+}
+
+.flow-header__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: #1e293b;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.flow-header__dropdown-item:hover {
+  background: #f1f5f9;
+}
+
+.flow-header__dropdown-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.flow-header__dropdown-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.flow-header__dropdown-item-code {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.flow-header__dropdown-item-loading {
+  font-size: 11px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
 .flow-header__btn--circle {
   width: 32px;
   padding: 0;
@@ -1429,6 +1509,11 @@
   color: #ef4444;
 }
 
+.flow-modal__error {
+  font-size: 12px;
+  color: #dc2626;
+}
+
 .flow-modal__input,
 .flow-modal__textarea,
 .flow-modal__select {
@@ -2239,10 +2324,11 @@
 .ffb-canvas2 {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px 24px;
+  padding: 12px 12px 24px;
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
 }
 
 .ffb-canvas2--over { background: #eff6ff; }
@@ -2261,39 +2347,79 @@
 
 .ffb-canvas2__empty-icon { font-size: 28px; }
 
-.ffb-drop-zone {
-  height: 32px;
-  border-radius: 8px;
-  margin: 2px 0;
-  border: 1.5px dashed transparent;
-  transition: background 0.12s, border-color 0.12s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #93c5fd;
-  font-size: 12.5px;
-  cursor: default;
+/* Cell wrapper — controls field width (%) so fields can sit side-by-side in a row */
+.ffb-cell {
+  box-sizing: border-box;
+  padding: 0 4px 8px;
+  position: relative;
 }
 
-.ffb-drop-zone--active {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  color: #3b82f6;
+.ffb-cell--drop-before::before,
+.ffb-cell--drop-after::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 2px;
+  background: #3b82f6;
 }
+
+.ffb-cell--drop-before::before { left: 1px; }
+.ffb-cell--drop-after::after { right: 1px; }
 
 /* Field Card */
 .ffb-card {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 8px 12px;
   background: #ffffff;
   border: 1.5px solid #e5e7eb;
   border-radius: 10px;
   cursor: pointer;
   transition: border-color 0.13s, box-shadow 0.13s;
-  margin-bottom: 2px;
   position: relative;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.ffb-card__resize {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 2;
+}
+
+.ffb-card__resize::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  width: 2px;
+  height: 18px;
+  border-radius: 1px;
+  background: #d1d5db;
+  transform: translateY(-50%);
+  transition: background 0.12s;
+}
+
+.ffb-card:hover .ffb-card__resize::after,
+.ffb-card--selected .ffb-card__resize::after {
+  background: #8b5cf6;
+}
+
+.ffb-card__width {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: auto;
 }
 
 .ffb-card:hover { border-color: #c4b5fd; box-shadow: 0 2px 8px rgba(139,92,246,0.08); }
@@ -2320,7 +2446,7 @@
   color: #7c3aed;
 }
 
-.ffb-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ffb-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 
 .ffb-card__top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -2544,6 +2670,142 @@
 .ffb-add-opt:hover { border-color: #8b5cf6; color: #7c3aed; background: #faf5ff; }
 
 .ffb-type-icon { font-size: 16px; line-height: 1; }
+
+/* Width presets (Field Properties) */
+.ffb-width-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ffb-width-btn {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ffb-width-btn:hover { border-color: #c4b5fd; color: #7c3aed; }
+
+.ffb-width-btn--active {
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Buttons config — shown in the right panel when no field is selected */
+.ffb-buttons {
+  width: 260px;
+  flex-shrink: 0;
+  border-left: 1px solid #e8eaed;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.ffb-buttons__head {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ffb-buttons__title { font-size: 12.5px; font-weight: 700; color: #1f2937; }
+
+.ffb-buttons__hint { font-size: 11.5px; color: #9ca3af; margin: 0; }
+
+/* Buttons preview — rendered at the bottom of the form-design canvas */
+.ffb-canvas2__buttons {
+  flex-shrink: 0;
+  border-top: 1px dashed #e5e7eb;
+  background: #ffffff;
+  padding: 10px 16px;
+}
+
+.ffb-buttons__preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+.ffb-buttons__preview--left { justify-content: flex-start; }
+.ffb-buttons__preview--center { justify-content: center; }
+.ffb-buttons__preview--right { justify-content: flex-end; }
+
+.ffb-buttons__empty { font-size: 12px; color: #9ca3af; }
+
+.ffb-buttons__chip {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+}
+
+.ffb-buttons__chip--submit { background: #8b5cf6; color: #ffffff; }
+.ffb-buttons__chip--cancel { background: #ffffff; color: #6b7280; border-color: #e5e7eb; }
+
+.ffb-buttons__list { display: flex; flex-direction: column; gap: 8px; }
+
+.ffb-buttons__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 28px;
+  gap: 6px;
+  align-items: center;
+}
+
+.ffb-buttons__type, .ffb-buttons__label { min-width: 0; }
+
+.ffb-buttons__del {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.ffb-buttons__del:hover { border-color: #fca5a5; color: #ef4444; background: #fef2f2; }
+
+.ffb-buttons__add { display: flex; flex-wrap: wrap; gap: 6px; }
+.ffb-buttons__add .ffb-add-opt { align-self: auto; }
+
+.ffb-buttons__layout { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ffb-layout-btn {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ffb-layout-btn:hover { border-color: #c4b5fd; color: #7c3aed; }
+
+.ffb-layout-btn--active {
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+  color: #7c3aed;
+  font-weight: 600;
+}
 
 /* ── Old FormBuilder (fb-body etc.) ───────────────────────────────────────── */
 

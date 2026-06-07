@@ -6,6 +6,7 @@ declare module 'vuesax-icons-react' {
   export const ArrowRotateLeft: FC<IconProps>;
   export const ArrowRotateRight: FC<IconProps>;
   export const Setting: FC<IconProps>;
+  export const FolderOpen: FC<IconProps>;
   const _default: Record<string, FC<IconProps>>;
   export default _default;
 }

@@ -1,6 +1,9 @@
 import type { Edge } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
 import type {
+  FormButton,
+  FormButtonsConfig,
+  FormButtonType,
   NodeConfigProperty,
   NodeFormData,
   WorkflowNodeData,
@@ -32,13 +35,40 @@ export function configPropertiesToPlainObject(items: NodeConfigProperty[]): Reco
   return out;
 }
 
+export function defaultFormButtons(): FormButtonsConfig {
+  return {
+    items: [
+      { id: uid("btn"), type: "submit", label: "Gửi" },
+      { id: uid("btn"), type: "cancel", label: "Hủy" }
+    ],
+    layout: "right"
+  };
+}
+
+function normalizeFormButtons(raw: unknown): FormButtonsConfig {
+  if (!raw || typeof raw !== "object") return defaultFormButtons();
+  const r = raw as Partial<FormButtonsConfig>;
+  const items: FormButton[] = Array.isArray(r.items)
+    ? r.items
+        .filter((b): b is FormButton => !!b && typeof b === "object")
+        .map((b) => ({
+          id: typeof b.id === "string" && b.id ? b.id : uid("btn"),
+          type: (b.type === "cancel" ? "cancel" : "submit") as FormButtonType,
+          label: typeof b.label === "string" ? b.label : ""
+        }))
+    : [];
+  const layout = r.layout === "left" || r.layout === "center" || r.layout === "right" ? r.layout : "right";
+  return { items, layout };
+}
+
 export function defaultFormData(type: WorkflowNodeType): NodeFormData {
   const empty: NodeFormData = {
     label: "",
     branchConditions: {},
     routingCondition: "",
     fields: [],
-    configProperties: []
+    configProperties: [],
+    buttons: defaultFormButtons()
   };
   if (type === "start-event") {
     return { ...empty, label: "Bắt đầu", routingCondition: "" };
@@ -183,7 +213,8 @@ export function hydrateWorkflowNodes(
               ? { ...n.branchConditions }
               : {},
           fields: Array.isArray(n.fields) ? n.fields : [],
-          configProperties: normalizeConfigProperties(n.configProperties)
+          configProperties: normalizeConfigProperties(n.configProperties),
+          buttons: normalizeFormButtons(n.buttons)
         }
       }
     });
@@ -243,6 +274,7 @@ export function buildWorkflowPayloadV1(
       routingCondition: n.data.formData.routingCondition ?? "",
       branchConditions: n.data.formData.branchConditions ?? {},
       fields: n.data.formData.fields,
+      buttons: n.data.formData.buttons ?? defaultFormButtons(),
       configProperties: n.data.formData.configProperties ?? [],
       configMap: configPropertiesToPlainObject(n.data.formData.configProperties ?? [])
     })),

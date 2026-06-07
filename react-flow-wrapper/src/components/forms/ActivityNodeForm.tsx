@@ -1,6 +1,7 @@
 import React from "react";
 import type { NodeFormData } from "../../workflow/types";
 import type { NodeConfigFormProps } from "./nodeFormTypes";
+import { defaultFormButtons } from "../../workflow/graphUtils";
 import { NodeFormShell } from "../NodeFormShell";
 import { FormBuilder } from "../FormBuilder";
 import { ExtendedConfigEditor } from "../ExtendedConfigEditor";
@@ -12,6 +13,9 @@ export const ActivityNodeForm: React.FC<NodeConfigFormProps> = ({ form, onSave, 
     branchConditions: { ...(form.branchConditions ?? {}) },
     fields: form.fields.map((f) => ({ ...f, options: f.options.map((o) => ({ ...o })) })),
     configProperties: (form.configProperties ?? []).map((c) => ({ ...c })),
+    buttons: form.buttons
+      ? { layout: form.buttons.layout, items: form.buttons.items.map((b) => ({ ...b })) }
+      : defaultFormButtons(),
   }));
 
   const tabs = [
@@ -23,6 +27,8 @@ export const ActivityNodeForm: React.FC<NodeConfigFormProps> = ({ form, onSave, 
         <FormBuilder
           fields={localForm.fields}
           onChangeFields={(fields) => setLocalForm((p) => ({ ...p, fields }))}
+          buttons={localForm.buttons ?? defaultFormButtons()}
+          onChangeButtons={(buttons) => setLocalForm((p) => ({ ...p, buttons }))}
         />
       ),
     },

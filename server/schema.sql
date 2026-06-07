@@ -1,0 +1,34 @@
+-- Run this in the Supabase SQL editor to create the workflows table.
+
+create table if not exists public.workflows (
+  id uuid primary key default gen_random_uuid(),
+  code text,
+  name text not null,
+  description text,
+  definition jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Phòng trường hợp bảng đã tồn tại từ phiên bản schema cũ (chưa có cột "code"):
+alter table public.workflows add column if not exists code text;
+
+create index if not exists workflows_updated_at_idx on public.workflows (updated_at desc);
+create unique index if not exists workflows_code_key on public.workflows (code) where code is not null;
+
+-- ── Row Level Security ──────────────────────────────────────────────────────
+-- BẮT BUỘC khi gọi PostgREST trực tiếp từ trình duyệt bằng anon/public key:
+-- nếu không bật RLS, anon key (lộ trong mã nguồn client) có toàn quyền đọc/ghi/xoá bảng này.
+-- Policy dưới đây cho phép client (role "anon") đọc và tạo mới quy trình,
+-- nhưng KHÔNG cho phép sửa/xoá từ trình duyệt (chỉ server với service_role mới làm được).
+alter table public.workflows enable row level security;
+
+create policy "Anon can read workflows"
+  on public.workflows for select
+  to anon
+  using (true);
+
+create policy "Anon can insert workflows"
+  on public.workflows for insert
+  to anon
+  with check (true);

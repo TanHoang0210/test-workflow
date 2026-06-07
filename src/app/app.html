@@ -2,9 +2,12 @@
   <react-flow-builder
     #flowBuilder
     [showHeader]="true"
-    (onSave)="onSave()"
   ></react-flow-builder>
 </div>
+
+@if (saveResult(); as result) {
+  <div class="save-toast" [ngClass]="'save-toast--' + result.type">{{ result.text }}</div>
+}
 
 <script type="module" src="/react-flow.js"></script>
 <link rel="stylesheet" href="/react-flow-wrapper.css" />
