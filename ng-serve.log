@@ -30,3 +30,171 @@ Application bundle generation complete. [1.824 seconds] - 2026-06-07T09:45:16.67
 Watch mode enabled. Watching for file changes...
 NOTE: Raw file sizes do not reflect development server per-request transformations.
   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+
+No output file changes.
+
+Application bundle generation complete. [0.603 seconds] - 2026-06-07T16:22:19.365Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:44:12:
+[37m      44 │   imports: [[32mRouterOutlet[37m, NgClass],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m       [2m | [22m[36m40.36 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m[2m | [22m[36m42.07 kB[39m[2m | [22m
+
+Application bundle generation complete. [0.281 seconds] - 2026-06-07T16:22:24.102Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:44:12:
+[37m      44 │   imports: [[32mRouterOutlet[37m, NgClass, JsonPipe],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: JsonPipe is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:44:35:
+[37m      44 │   imports: [RouterOutlet, NgClass, [32mJsonPipe[37m],
+         ╵                                    [32m~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m       [2m | [22m[36m40.36 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m[2m | [22m[36m42.07 kB[39m[2m | [22m
+
+Application bundle generation complete. [0.287 seconds] - 2026-06-07T16:22:32.724Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:12:
+[37m      65 │   imports: [[32mRouterOutlet[37m, NgClass, JsonPipe],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: JsonPipe is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:35:
+[37m      65 │   imports: [RouterOutlet, NgClass, [32mJsonPipe[37m],
+         ╵                                    [32m~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m       [2m | [22m[36m41.26 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m[2m | [22m[36m42.97 kB[39m[2m | [22m
+
+Application bundle generation complete. [0.252 seconds] - 2026-06-07T16:22:44.075Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:12:
+[37m      65 │   imports: [[32mRouterOutlet[37m, NgClass, JsonPipe],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: JsonPipe is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:35:
+[37m      65 │   imports: [RouterOutlet, NgClass, [32mJsonPipe[37m],
+         ╵                                    [32m~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m       [2m | [22m[36m43.28 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m[2m | [22m[36m44.99 kB[39m[2m | [22m
+
+Application bundle generation complete. [0.246 seconds] - 2026-06-07T16:22:56.492Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:12:
+[37m      65 │   imports: [[32mRouterOutlet[37m, NgClass, JsonPipe],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: JsonPipe is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:35:
+[37m      65 │   imports: [RouterOutlet, NgClass, [32mJsonPipe[37m],
+         ╵                                    [32m~~~~~~~~[0m
+
+[39m[22m
+Page reload sent to client(s).
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m       [2m | [22m[36m52.45 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m[2m | [22m[36m54.16 kB[39m[2m | [22m
+
+Application bundle generation complete. [0.294 seconds] - 2026-06-07T16:23:13.180Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:12:
+[37m      65 │   imports: [[32mRouterOutlet[37m, NgClass, JsonPipe],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+Component update sent to client(s).
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m       [2m | [22m[36m56.56 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m      [2m | [22m[1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m[2m | [22m[36m58.27 kB[39m[2m | [22m
+
+Application bundle generation complete. [0.249 seconds] - 2026-06-07T16:23:28.612Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterOutlet is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:65:12:
+[37m      65 │   imports: [[32mRouterOutlet[37m, NgClass, JsonPipe],
+         ╵             [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+Component update sent to client(s).

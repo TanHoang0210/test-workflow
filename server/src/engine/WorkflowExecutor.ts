@@ -1,6 +1,7 @@
 import type { WorkflowJSON } from '../types/workflow.js';
 import type { ExecutionResult, ExecutionStep } from './types.js';
 import { resolveConditionTarget } from './conditions.js';
+import { executeAutomaticNode } from './automaticNode.js';
 
 const MAX_STEPS = 500;
 
@@ -94,46 +95,9 @@ export class WorkflowExecutor {
   }
 
   private executeNode(node: WorkflowNode): void {
-    const cfg = node.configMap ?? {};
-
     switch (node.type) {
-      case 'start-event':
-        this.log(node, 'ok', 'Bắt đầu quy trình');
-        break;
-
-      case 'end-event':
-        this.log(node, 'ok', 'Kết thúc quy trình');
-        break;
-
-      case 'condition':
-      case 'switch':
-        this.log(node, 'ok', 'Đánh giá các nhánh điều kiện');
-        break;
-
-      case 'notification': {
-        const recipients = this.parseJSONArray(cfg['recipients']);
-        const channel = cfg['channel'] ?? 'email';
-        this.log(node, 'ok', `Gửi thông báo (${channel}) tới ${recipients.length || 0} người nhận: ${cfg['subject'] ?? node.label}`);
-        break;
-      }
-
       case 'attach-file':
         this.log(node, 'skipped', 'Bước đính kèm tệp cần thao tác từ người dùng — bỏ qua khi chạy phía server');
-        break;
-
-      case 'find-records': {
-        const outputVar = cfg['outputVar'] ?? 'records';
-        this.variables[outputVar] = [];
-        this.log(node, 'ok', `Tìm bản ghi từ "${cfg['source'] ?? 'default'}" → lưu vào biến "${outputVar}" (kết quả rỗng — chưa cấu hình nguồn dữ liệu thật)`);
-        break;
-      }
-
-      case 'submit':
-        this.log(node, 'ok', 'Gửi/lưu dữ liệu của quy trình');
-        break;
-
-      case 'history-log':
-        this.log(node, 'ok', `Ghi log lịch sử (mức ${cfg['logLevel'] ?? 'info'})`);
         break;
 
       case 'form':
@@ -141,22 +105,12 @@ export class WorkflowExecutor {
         this.log(node, 'skipped', 'Bước biểu mẫu cần nhập liệu từ người dùng — bỏ qua khi chạy phía server');
         break;
 
-      case 'redirect': {
-        const mode = cfg['mode'] ?? 'node';
-        this.log(node, 'ok', `Điều hướng (${mode}) → ${cfg['targetNodeId'] ?? cfg['targetWorkflowId'] ?? 'không xác định'}`);
-        break;
-      }
-
       case 'view-sign':
         this.log(node, 'skipped', 'Bước ký tài liệu cần thao tác từ người dùng — bỏ qua khi chạy phía server');
         break;
 
-      case 'alert-error':
-        this.log(node, 'ok', `Cảnh báo lỗi: ${node.label}`);
-        break;
-
       default:
-        this.log(node, 'ok', `Thực thi bước "${node.label}"`);
+        executeAutomaticNode(node, this.variables, (n, status, message) => this.log(n, status, message));
     }
   }
 
@@ -169,15 +123,5 @@ export class WorkflowExecutor {
       message,
       timestamp: new Date().toISOString(),
     });
-  }
-
-  private parseJSONArray(raw: string | undefined): unknown[] {
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
   }
 }

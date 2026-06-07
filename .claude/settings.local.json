@@ -88,7 +88,23 @@
       "Bash(rm -f ng-serve.log)",
       "Bash(curl -s -o /dev/null -w \"/flow/<id>: %{http_code}\\\\n\" \"http://localhost:4200/flow/509b6cd4-a9a6-4330-8461-be0fc5a7d975\")",
       "Bash(curl -s -o /dev/null -w \"/: %{http_code}\\\\n\" \"http://localhost:4200/\")",
-      "Bash(curl -s -o /dev/null -w \"/random-unknown: %{http_code}\\\\n\" \"http://localhost:4200/totally-random-xyz\")"
+      "Bash(curl -s -o /dev/null -w \"/random-unknown: %{http_code}\\\\n\" \"http://localhost:4200/totally-random-xyz\")",
+      "Bash(grep -n \"workflow-engine\" tsconfig*.json)",
+      "Bash(find . -path \"*/node_modules/*\" -prune -o -type d -iname \"*workflow-engine*\" -print)",
+      "Bash(curl -s -X POST http://localhost:8080/api/workflows/509b6cd4-a9a6-4330-8461-be0fc5a7d975/start -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/instances/97223be6-3c8f-4ca2-b1c2-2e4b2ed0ec85/next -H \"Content-Type: application/json\" -d '{\"variables\": {\"ten_nguoi_dung\": \"Nguyen Van A\"}}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/instances/97223be6-3c8f-4ca2-b1c2-2e4b2ed0ec85/next -H \"Content-Type: application/json\" -d '{\"variables\": {\"attachment_url\": \"https://example.com/file.pdf\"}}')",
+      "Bash(curl -s http://localhost:8080/api/workflows/509b6cd4-a9a6-4330-8461-be0fc5a7d975/instances)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://localhost:8080/api/instances/97223be6-3c8f-4ca2-b1c2-2e4b2ed0ec85/next -H \"Content-Type: application/json\" -d '{\"variables\": {}}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/instances/97223be6-3c8f-4ca2-b1c2-2e4b2ed0ec85/next -H \"Content-Type: application/json\" -d '{\"variables\": {\"signature\": \"signed-by-A\"}}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); i=d['instance']; print\\('status:', i['status']\\); print\\('current_node_id:', i['current_node_id']\\); [print\\(' ', s['nodeId'], s['status'], s['message']\\) for s in i['steps'][-5:]]\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" -X POST http://localhost:8080/api/instances/97223be6-3c8f-4ca2-b1c2-2e4b2ed0ec85/next -H \"Content-Type: application/json\" -d '{\"variables\": {}}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/instances/97223be6-3c8f-4ca2-b1c2-2e4b2ed0ec85/next -H \"Content-Type: application/json\" -d '{\"variables\": {}}')",
+      "Bash(curl -s http://localhost:4200/)",
+      "Bash(curl -s http://localhost:4200/ -o /tmp/page.html)",
+      "Bash(curl -s \"http://localhost:4200/main.js\")",
+      "Bash(grep -o \"B\\\\\\\\\\\\\\\\u1eaft \\\\\\\\\\\\\\\\u0111\\\\\\\\\\\\\\\\u1ea7u \\(start\\)\")",
+      "Bash(curl -s \"http://localhost:4200/main.js\" -o /tmp/main.js)"
     ]
   }
 }

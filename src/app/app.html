@@ -9,5 +9,62 @@
   <div class="save-toast" [ngClass]="'save-toast--' + result.type">{{ result.text }}</div>
 }
 
+<!-- Test panel cho API instance (start/next) — gọi thẳng tới Node server (port 8080) -->
+<div class="instance-test-panel">
+  <div class="instance-test-panel__title">Test instance API (start / next)</div>
+
+  <div class="instance-test-panel__row">
+    Quy trình đang mở:
+    <code>{{ currentWorkflowIdForTest ?? '(chưa có — hãy lưu hoặc mở 1 quy trình)' }}</code>
+  </div>
+
+  <button class="instance-test-panel__btn" (click)="startTestInstance()" [disabled]="testBusy()">
+    ▶ Bắt đầu (start)
+  </button>
+
+  @if (testError(); as err) {
+    <div class="instance-test-panel__error">{{ err }}</div>
+  }
+
+  @if (testInstance(); as instance) {
+    <div class="instance-test-panel__row">instance: <code>{{ instance.id }}</code></div>
+    <div class="instance-test-panel__row">status: <strong>{{ instance.status }}</strong></div>
+    <div class="instance-test-panel__row">current_node_id: <code>{{ instance.current_node_id }}</code></div>
+    <div class="instance-test-panel__row">pending_node_id: <code>{{ instance.pending_node_id }}</code></div>
+
+    @if (instance.error) {
+      <div class="instance-test-panel__error">error: {{ instance.error }}</div>
+    }
+
+    @if (instance.status === 'waiting') {
+      <div class="instance-test-panel__next">
+        <label>Biến gửi cho "next" (JSON):</label>
+        <textarea
+          rows="3"
+          [value]="testVariablesJson()"
+          (input)="updateTestVariablesJson($any($event.target).value)"
+        ></textarea>
+        <button class="instance-test-panel__btn" (click)="sendTestNext()" [disabled]="testBusy()">
+          ⏭ Gửi tiếp (next)
+        </button>
+      </div>
+    }
+
+    <details class="instance-test-panel__details">
+      <summary>Log các bước ({{ instance.steps.length }})</summary>
+      <ul>
+        @for (step of instance.steps; track step.timestamp + step.nodeId + step.status) {
+          <li>[{{ step.status }}] {{ step.nodeLabel }} ({{ step.nodeType }}) — {{ step.message }}</li>
+        }
+      </ul>
+    </details>
+
+    <details class="instance-test-panel__details">
+      <summary>Biến hiện tại</summary>
+      <pre>{{ instance.variables | json }}</pre>
+    </details>
+  }
+</div>
+
 <script type="module" src="/react-flow.js"></script>
 <link rel="stylesheet" href="/react-flow-wrapper.css" />

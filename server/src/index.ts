@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { workflowsRouter } from './routes/workflows.js';
+import { instancesRouter } from './routes/instances.js';
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json({ limit: '5mb' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/workflows', workflowsRouter);
+app.use('/api/instances', instancesRouter);
 
 const port = Number(process.env.PORT) || 8080;
 app.listen(port, () => {

@@ -2,7 +2,7 @@ export interface ExecutionStep {
   nodeId: string;
   nodeType: string;
   nodeLabel: string;
-  status: 'ok' | 'skipped' | 'error';
+  status: 'ok' | 'skipped' | 'error' | 'waiting';
   message: string;
   timestamp: string;
 }

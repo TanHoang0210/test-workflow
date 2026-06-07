@@ -130,3 +130,107 @@ react-flow-builder {
 .exec-log-entry--warn    { color: #fab387; }
 .exec-log-entry--jump    { color: #cba6f7; }
 .exec-log-entry--handoff { color: #f9e2af; }
+
+.instance-test-panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  width: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: monospace;
+  font-size: 12px;
+  border: 1px solid #313244;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.instance-test-panel__title {
+  font-weight: bold;
+  color: #89b4fa;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.instance-test-panel__row {
+  padding: 2px 0;
+  word-break: break-all;
+}
+
+.instance-test-panel__btn {
+  margin: 6px 0;
+  background: none;
+  border: 1px solid #45475a;
+  color: #a6adc8;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.instance-test-panel__btn:hover {
+  background: #313244;
+}
+
+.instance-test-panel__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.instance-test-panel__error {
+  color: #f38ba8;
+  padding: 4px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.instance-test-panel__next {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.instance-test-panel__next textarea {
+  background: #181825;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 4px;
+  resize: vertical;
+}
+
+.instance-test-panel__details {
+  margin-top: 6px;
+  border-top: 1px solid #313244;
+  padding-top: 4px;
+}
+
+.instance-test-panel__details summary {
+  cursor: pointer;
+  color: #89b4fa;
+}
+
+.instance-test-panel__details ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+
+.instance-test-panel__details li {
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.instance-test-panel__details pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 4px 0 0;
+}

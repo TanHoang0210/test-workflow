@@ -25,6 +25,10 @@ Emitted 'error' event on Server instance at:
 
 Node.js v22.22.211:59:53 PM [tsx] change in ./src\routes\workflows.ts Rerunning...
 cnode:events:497
+      throw er; // Unhandled 'error'11:02:48 PM [tsx] change in ./src\engine\WorkflowExecutor.ts Rerunning...
+c[workflow-server] listening on http://localhost:8080
+11:03:09 PM [tsx] change in ./src\engine\WorkflowExecutor.ts Restarting...
+cnode:events:497
       throw er; // Unhandled 'error' event
       ^
 
@@ -34,6 +38,106 @@ Error: listen EADDRINUSE: address already in use :::8080
     at Server.listen (node:net:2102:7)
     at Function.listen (F:\WORK\VNPT\WORKFLOW\test-workflow\server\node_modules\express\lib\application.js:635:24)
     at <anonymous> (F:\WORK\VNPT\WORKFLOW\test-workflow\server\src\index.ts:16:5)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 8080
+}
+
+Node.js v22.22.2
+11:05:31 PM [tsx] change in ./src\routes\workflows.ts Rerunning...
+c[workflow-server] listening on http://localhost:8080
+11:05:43 PM [tsx] change in ./src\routes\workflows.ts Restarting...
+cnode:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::8080
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (F:\WORK\VNPT\WORKFLOW\test-workflow\server\node_modules\express\lib\application.js:635:24)
+    at <anonymous> (F:\WORK\VNPT\WORKFLOW\test-workflow\server\src\index.ts:16:5)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 8080
+}
+
+Node.js v22.22.2
+11:06:31 PM [tsx] change in ./src\routes\workflows.ts Rerunning...
+c[workflow-server] listening on http://localhost:8080
+11:07:13 PM [tsx] change in ./src\index.ts Restarting...
+cnode:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::8080
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (F:\WORK\VNPT\WORKFLOW\test-workflow\server\node_modules\express\lib\application.js:635:24)
+    at <anonymous> (F:\WORK\VNPT\WORKFLOW\test-workflow\server\src\index.ts:17:5)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 8080
+}
+
+Node.js v22.22.2
+11:07:20 PM [tsx] change in ./src\index.ts Rerunning...
+c[workflow-server] listening on http://localhost:8080
+)
+    at Function.listen (F:\WORK\VNPT\WORKFLOW\test-workflow\server\node_modules\express\lib\application.js:635:24)
+    at <anonymous> (F:\WORK\VNPT\WORKFLOW\test-workflow\server\src\index.ts:16:5)
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 8080
+}
+
+Node.js v22.22.2
+11:07:13 PM [tsx] change in ./src\index.ts Rerunning...
+c[workflow-server] listening on http://localhost:8080
+11:07:20 PM [tsx] change in ./src\index.ts Restarting...
+cnode:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::8080
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (F:\WORK\VNPT\WORKFLOW\test-workflow\server\node_modules\express\lib\application.js:635:24)
+    at <anonymous> (F:\WORK\VNPT\WORKFLOW\test-workflow\server\src\index.ts:18:5)
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)

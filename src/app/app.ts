@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Location, NgClass } from '@angular/common';
+import { JsonPipe, Location, NgClass } from '@angular/common';
 // import { DemoAdapter } from './adapters/demo.adapter'; // dùng khi có backend thật
 import { WorkflowRunner }  from './workflow-runner';
 import type { WorkflowJSON } from './workflow-runner';
@@ -39,9 +39,30 @@ export interface WorkflowSummary {
   updated_at?: string;
 }
 
+// ── Test panel cho API instance (start/next) — gọi thẳng tới Node server ────
+// (KHÔNG phải Supabase REST: instance chỉ truy cập được qua backend service_role)
+export interface InstanceStep {
+  nodeId: string;
+  nodeType: string;
+  nodeLabel: string;
+  status: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface InstanceTestState {
+  id: string;
+  status: string;
+  current_node_id: string | null;
+  pending_node_id: string | null;
+  variables: Record<string, unknown>;
+  steps: InstanceStep[];
+  error: string | null;
+}
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgClass],
+  imports: [RouterOutlet, NgClass, JsonPipe],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -65,6 +86,19 @@ export class App implements AfterViewInit, OnDestroy {
   // id của quy trình đang mở (gắn lên đường dẫn URL) — null nghĩa là quy trình mới chưa lưu.
   // Khi đã có id, lưu sẽ gọi API update (PATCH) thay vì tạo mới (POST).
   private currentWorkflowId: string | null = null;
+
+  // ── Test panel: gọi API start/next của Node server (server/) — KHÁC với Supabase ──
+  // REST ở trên (Supabase chỉ lưu định nghĩa quy trình; instance chạy chỉ truy cập
+  // được qua backend service_role, xem server/src/routes/instances.ts).
+  private readonly serverUrl = 'http://localhost:8080';
+  protected testInstance = signal<InstanceTestState | null>(null);
+  protected testVariablesJson = signal('{}');
+  protected testBusy = signal(false);
+  protected testError = signal<string | null>(null);
+
+  protected get currentWorkflowIdForTest(): string | null {
+    return this.currentWorkflowId;
+  }
 
   @ViewChild('flowBuilder') flowBuilderRef!: ElementRef;
 
@@ -307,4 +341,66 @@ export class App implements AfterViewInit, OnDestroy {
   onRedo = () => {
     this.flowBuilderRef.nativeElement.dispatchEvent(new CustomEvent('requestRedo'));
   };
+
+  // ── Test panel: start/next instance qua Node server ────────────────────
+
+  protected updateTestVariablesJson(value: string): void {
+    this.testVariablesJson.set(value);
+  }
+
+  protected async startTestInstance(): Promise<void> {
+    if (!this.currentWorkflowId) {
+      this.testError.set('Chưa có quy trình đang mở (chưa có id) — hãy lưu hoặc mở một quy trình trước.');
+      return;
+    }
+
+    this.testBusy.set(true);
+    this.testError.set(null);
+    try {
+      const res = await fetch(`${this.serverUrl}/api/workflows/${this.currentWorkflowId}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error ?? `HTTP ${res.status}`);
+      this.testInstance.set(body.instance as InstanceTestState);
+      this.testVariablesJson.set('{}');
+    } catch (err) {
+      this.testError.set((err as Error).message);
+    } finally {
+      this.testBusy.set(false);
+    }
+  }
+
+  protected async sendTestNext(): Promise<void> {
+    const instance = this.testInstance();
+    if (!instance) return;
+
+    let variables: Record<string, unknown>;
+    try {
+      variables = JSON.parse(this.testVariablesJson() || '{}');
+    } catch {
+      this.testError.set('JSON biến không hợp lệ — kiểm tra lại cú pháp.');
+      return;
+    }
+
+    this.testBusy.set(true);
+    this.testError.set(null);
+    try {
+      const res = await fetch(`${this.serverUrl}/api/instances/${instance.id}/next`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error ?? `HTTP ${res.status}`);
+      this.testInstance.set(body.instance as InstanceTestState);
+      this.testVariablesJson.set('{}');
+    } catch (err) {
+      this.testError.set((err as Error).message);
+    } finally {
+      this.testBusy.set(false);
+    }
+  }
 }
