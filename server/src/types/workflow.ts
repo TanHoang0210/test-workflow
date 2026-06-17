@@ -3,6 +3,35 @@ import type { ExecutionStep } from '../engine/types.js';
 // Mirrors the WorkflowJSON shape produced by the React builder
 // (see react-flow-wrapper/src/workflow/types.ts and src/app/workflow-runner.ts)
 
+// Mirrors FormField (react-flow-wrapper/src/workflow/types.ts) — kept loose since the
+// server only needs to forward this shape to the client for rendering, not validate it.
+export interface WorkflowFormField {
+  id: string;
+  type: string;
+  label: string;
+  options: Array<{ id: string; label: string }>;
+  key?: string;
+  placeholder?: string;
+  description?: string;
+  required?: boolean;
+  readOnly?: boolean;
+  validation?: { type: string | null; pattern?: string; maxLength?: number; minLength?: number };
+  defaultValue?: { source: string; value: string };
+  conditionalVisibility?: { fieldKey: string; operator: string; value: string } | null;
+  width?: number;
+}
+
+export interface WorkflowFormButton {
+  id: string;
+  type: 'submit' | 'cancel';
+  label: string;
+}
+
+export interface WorkflowFormButtonsConfig {
+  items: WorkflowFormButton[];
+  layout: 'left' | 'center' | 'right';
+}
+
 export interface WorkflowJSON {
   version: string;
   nodes: Array<{
@@ -10,7 +39,8 @@ export interface WorkflowJSON {
     type: string;
     label: string;
     position: { x: number; y: number };
-    fields: unknown[];
+    fields: WorkflowFormField[];
+    buttons?: WorkflowFormButtonsConfig;
     branchConditions?: Record<string, string>;
     routingCondition?: string;
     configMap?: Record<string, string>;

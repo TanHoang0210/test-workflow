@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../db/supabase.js';
 import type { ExecutionStep } from '../engine/types.js';
 import { WorkflowInstanceEngine } from '../engine/WorkflowInstanceEngine.js';
-import type { WorkflowInstanceRecord } from '../types/workflow.js';
+import type { WorkflowInstanceRecord, WorkflowJSON } from '../types/workflow.js';
 import { isWorkflowJSON } from './workflows.js';
 
 export const instancesRouter = Router();
@@ -21,6 +21,54 @@ instancesRouter.get('/:instanceId', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: 'Instance not found' });
   res.json({ instance: data as WorkflowInstanceRecord });
+});
+
+// GET /api/instances/:instanceId/pending-node — trả về cấu hình (fields/buttons/...) của
+// node mà instance đang chờ người dùng thao tác, để client tự render giao diện nhập liệu.
+instancesRouter.get('/:instanceId/pending-node', async (req, res) => {
+  const { data: instance, error: fetchError } = await supabase
+    .from(INSTANCES_TABLE)
+    .select('*')
+    .eq('id', req.params.instanceId)
+    .maybeSingle();
+
+  if (fetchError) return res.status(500).json({ error: fetchError.message });
+  if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+  const record = instance as WorkflowInstanceRecord;
+  if (record.status !== 'waiting' || !record.pending_node_id) {
+    return res.status(409).json({ error: `Instance không có node nào đang chờ (status hiện tại: "${record.status}")` });
+  }
+
+  const { data: workflow, error: workflowError } = await supabase
+    .from(WORKFLOWS_TABLE)
+    .select('id, definition')
+    .eq('id', record.workflow_id)
+    .maybeSingle();
+
+  if (workflowError) return res.status(500).json({ error: workflowError.message });
+  if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+  if (!isWorkflowJSON(workflow.definition)) {
+    return res.status(422).json({ error: 'Stored workflow definition is invalid (missing nodes[] / edges[])' });
+  }
+
+  const definition = workflow.definition as WorkflowJSON;
+  const node = definition.nodes.find((n) => n.id === record.pending_node_id);
+  if (!node) {
+    return res.status(404).json({ error: `Không tìm thấy node "${record.pending_node_id}" trong định nghĩa quy trình` });
+  }
+
+  res.json({
+    instanceId: record.id,
+    node: {
+      id: node.id,
+      type: node.type,
+      label: node.label,
+      fields: node.fields ?? [],
+      buttons: node.buttons ?? null,
+      configMap: node.configMap ?? {},
+    },
+  });
 });
 
 // POST /api/instances/:instanceId/next — gửi dữ liệu người dùng vừa nhập (biểu mẫu / tệp đính

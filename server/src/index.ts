@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { workflowsRouter } from './routes/workflows.js';
 import { instancesRouter } from './routes/instances.js';
+import { filesRouter } from './routes/files.js';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/workflows', workflowsRouter);
 app.use('/api/instances', instancesRouter);
+app.use('/api/files', filesRouter);
 
 const port = Number(process.env.PORT) || 8080;
 app.listen(port, () => {

@@ -1,17 +1,38 @@
-<div class="flow-container">
+<!-- react-flow-builder luôn được mount (chỉ ẩn/hiện bằng CSS) — nếu phá hủy/tạo lại element
+     này khi chuyển qua lại với form-runner, React bên trong sẽ mất toàn bộ state canvas
+     (nodes/edges) và các listener gắn trong ngAfterViewInit cũng không gắn lại được. -->
+<div class="flow-container" [class.flow-container--hidden]="formRunnerInstanceId()">
   <react-flow-builder
     #flowBuilder
     [showHeader]="true"
   ></react-flow-builder>
 </div>
 
+@if (formRunnerInstanceId(); as instanceId) {
+  <app-form-runner
+    [instanceId]="instanceId"
+    (back)="closeFormRunner()"
+    (submitted)="onFormRunnerSubmitted($event)"
+  ></app-form-runner>
+}
+
 @if (saveResult(); as result) {
   <div class="save-toast" [ngClass]="'save-toast--' + result.type">{{ result.text }}</div>
 }
 
 <!-- Test panel cho API instance (start/next) — gọi thẳng tới Node server (port 8080) -->
+@if (testPanelCollapsed()) {
+  <button
+    class="instance-test-fab"
+    (click)="toggleTestPanel()"
+    title="Test instance API (start / next)"
+  >🧪</button>
+} @else {
 <div class="instance-test-panel">
-  <div class="instance-test-panel__title">Test instance API (start / next)</div>
+  <div class="instance-test-panel__header">
+    <div class="instance-test-panel__title">Test instance API (start / next)</div>
+    <button class="instance-test-panel__collapse" (click)="toggleTestPanel()" title="Thu gọn">✕</button>
+  </div>
 
   <div class="instance-test-panel__row">
     Quy trình đang mở:
@@ -38,7 +59,10 @@
 
     @if (instance.status === 'waiting') {
       <div class="instance-test-panel__next">
-        <label>Biến gửi cho "next" (JSON):</label>
+        <button class="instance-test-panel__btn" (click)="openFormRunner(instance.id)">
+          📝 Mở biểu mẫu nhập liệu
+        </button>
+        <label>Hoặc gửi thẳng biến cho "next" (JSON):</label>
         <textarea
           rows="3"
           [value]="testVariablesJson()"
@@ -65,6 +89,7 @@
     </details>
   }
 </div>
+}
 
 <script type="module" src="/react-flow.js"></script>
 <link rel="stylesheet" href="/react-flow-wrapper.css" />

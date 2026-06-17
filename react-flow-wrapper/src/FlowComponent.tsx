@@ -620,6 +620,27 @@ const FlowComponent: React.FC<FlowWidgetProps> = ({
     [makeNodeData, setNodes, setEdges]
   );
 
+  // requestLoadWorkflow — host (Angular) yêu cầu nạp một quy trình theo id lên canvas, ví dụ
+  // khi người dùng mở thẳng URL "/flow/:id" (xem App.constructor đọc location.path()).
+  // Cùng cơ chế "dispatch CustomEvent trên host element" như requestSave (xem effect ở trên).
+  React.useEffect(() => {
+    const root = flowRootRef.current;
+    if (!root) return;
+    const rootNode = root.getRootNode();
+    const host: EventTarget =
+      rootNode instanceof ShadowRoot
+        ? rootNode.host
+        : (root.closest("react-flow-builder") ?? root);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ payload?: WorkflowPersistPayloadV1; meta?: SaveWorkflowMeta }>).detail;
+      if (!detail?.payload) return;
+      loadPayloadIntoCanvas(detail.payload);
+      setCurrentWorkflowMeta(detail.meta ?? null);
+    };
+    host.addEventListener("requestLoadWorkflow", handler);
+    return () => host.removeEventListener("requestLoadWorkflow", handler);
+  }, [loadPayloadIntoCanvas]);
+
   // ── Dropdown "Mở quy trình" — load danh sách + nạp quy trình đã chọn lên canvas ──
   const [showWorkflowMenu, setShowWorkflowMenu] = React.useState(false);
   const [workflowList, setWorkflowList] = React.useState<WorkflowListItem[] | null>(null);

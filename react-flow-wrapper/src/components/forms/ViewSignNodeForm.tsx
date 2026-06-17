@@ -4,6 +4,7 @@ import type { NodeConfigFormProps } from "./nodeFormTypes";
 import { NodeFormShell } from "../NodeFormShell";
 import { ExtendedConfigEditor } from "../ExtendedConfigEditor";
 import { uid } from "../../workflow/uid";
+import { uploadSignatureSample } from "../../services/supabaseStorage";
 
 // ── Data model ─────────────────────────────────────────────────────────────
 
@@ -31,6 +32,9 @@ interface SignerConfig {
   signType: SignType;
   initialsScope: InitialsScope;
   customPages: string;
+  // Mẫu chữ ký — ảnh upload, lưu trong bucket "flow-test" của Supabase Storage
+  signatureSampleUrl: string;
+  signatureSamplePath: string;
 }
 
 function newSigner(): SignerConfig {
@@ -49,6 +53,8 @@ function newSigner(): SignerConfig {
     signType: "both",
     initialsScope: "all",
     customPages: "",
+    signatureSampleUrl: "",
+    signatureSamplePath: "",
   };
 }
 
@@ -87,6 +93,29 @@ const SignerCard: React.FC<{
   canRemove: boolean;
 }> = ({ signer, index, onChange, onRemove, canRemove }) => {
   const upd = (patch: Partial<SignerConfig>) => onChange({ ...signer, ...patch });
+
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleSampleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const uploaded = await uploadSignatureSample(file, signer.name || signer.id);
+      upd({ signatureSampleUrl: uploaded.publicUrl, signatureSamplePath: uploaded.path });
+    } catch (err) {
+      setUploadError((err as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeSample = () => upd({ signatureSampleUrl: "", signatureSamplePath: "" });
 
   const toggleStandard = (s: Standard) => {
     const next = signer.standards.includes(s)
@@ -343,14 +372,51 @@ const SignerCard: React.FC<{
             <label className="vks-label">
               MẪU CHỮ KÝ <span className="vks-label--opt">(OPTIONAL)</span>
             </label>
-            <div className="vks-sample__box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" width="28" height="28">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <path d="M8 15c2-1 4 1 6-1" strokeLinecap="round" />
-              </svg>
-              <span className="vks-sample__hint">Tải lên mẫu chữ ký (.png, .jpg)</span>
-            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              style={{ display: "none" }}
+              onChange={handleSampleFileChange}
+            />
+
+            {signer.signatureSampleUrl ? (
+              <div className="vks-sample__preview">
+                <img className="vks-sample__img" src={signer.signatureSampleUrl} alt="Mẫu chữ ký" />
+                <div className="vks-sample__preview-actions">
+                  <button
+                    type="button"
+                    className="vks-sample__action"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? "Đang tải..." : "Thay ảnh khác"}
+                  </button>
+                  <button type="button" className="vks-sample__action vks-sample__action--del" onClick={removeSample}>
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="vks-sample__box vks-sample__box--btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" width="28" height="28">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <path d="M8 15c2-1 4 1 6-1" strokeLinecap="round" />
+                </svg>
+                <span className="vks-sample__hint">
+                  {uploading ? "Đang tải lên bucket “flow-test”..." : "Tải lên mẫu chữ ký (.png, .jpg)"}
+                </span>
+              </button>
+            )}
+
+            {uploadError && <p className="vks-sample__error">{uploadError}</p>}
           </div>
         </div>
       </div>
@@ -382,7 +448,10 @@ export const ViewSignNodeForm: React.FC<NodeConfigFormProps> = ({ form, onSave, 
     const raw = cfg.find((c) => c.key === "__viewSignConfig")?.value ?? "";
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
+      if (Array.isArray(parsed) && parsed.length) {
+        // Backward compat — config cũ chưa có trường mẫu chữ ký
+        return parsed.map((s) => ({ signatureSampleUrl: "", signatureSamplePath: "", ...s }));
+      }
     } catch { /* ignore */ }
     return [newSigner()];
   });

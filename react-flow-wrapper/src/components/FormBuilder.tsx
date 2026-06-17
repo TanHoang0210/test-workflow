@@ -390,15 +390,17 @@ const FormButtonsEditor: React.FC<{
       <div className="ffb-buttons__list">
         {config.items.map((b) => (
           <div key={b.id} className="ffb-buttons__row">
-            <select className="ffb-input ffb-buttons__type" value={b.type}
-              onChange={(e) => updateButton(b.id, { type: e.target.value as FormButtonType })}>
-              <option value="submit">Gửi (Submit)</option>
-              <option value="cancel">Hủy (Cancel)</option>
-            </select>
+            <div className="ffb-buttons__row-top">
+              <select className="ffb-input ffb-buttons__type" value={b.type}
+                onChange={(e) => updateButton(b.id, { type: e.target.value as FormButtonType })}>
+                <option value="submit">Gửi (Submit)</option>
+                <option value="cancel">Hủy (Cancel)</option>
+              </select>
+              <button type="button" className="ffb-buttons__del" onClick={() => removeButton(b.id)} title="Xóa nút">✕</button>
+            </div>
             <input className="ffb-input ffb-buttons__label" value={b.label}
               onChange={(e) => updateButton(b.id, { label: e.target.value })}
               placeholder="Nhãn nút..." />
-            <button type="button" className="ffb-buttons__del" onClick={() => removeButton(b.id)} title="Xóa nút">✕</button>
           </div>
         ))}
       </div>

@@ -14,7 +14,7 @@ import ReactFlow, {
 } from "reactflow";
 import type { Node as FlowNode } from "reactflow";
 import type { WorkflowNodeData, WorkflowNodeType } from "../workflow/types";
-import { WORKFLOW_NODE_DRAG_MIME } from "../workflow/constants";
+import { NODE_TYPE_LABELS, WORKFLOW_NODE_DRAG_MIME } from "../workflow/constants";
 import { NodeConnectionHints } from "./NodeConnectionHints";
 
 export type WorkflowFlowCanvasProps = {
@@ -79,12 +79,7 @@ export const WorkflowFlowCanvas: React.FC<WorkflowFlowCanvasProps> = ({
       e.preventDefault();
       const raw =
         e.dataTransfer.getData(WORKFLOW_NODE_DRAG_MIME) || e.dataTransfer.getData("text/plain");
-      if (
-        raw !== "start-event" &&
-        raw !== "activity" &&
-        raw !== "condition" &&
-        raw !== "end-event"
-      ) {
+      if (!(raw in NODE_TYPE_LABELS)) {
         return;
       }
       const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });

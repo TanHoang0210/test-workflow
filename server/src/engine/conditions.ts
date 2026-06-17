@@ -33,8 +33,24 @@ function toComparable(value: unknown): { asString: string; asNumber: number | nu
   return { asString, asNumber };
 }
 
+// Resolves a variable reference against the runtime variables bag. Supports both
+// flat keys (e.g. "outputVar", "form_<nodeId>_label") and dot-paths into nested
+// objects (e.g. "<formNodeId>.<fieldKey>" — how form-node submissions are namespaced:
+// variables[nodeId] = { ...formValues }).
+function resolveVariable(path: string, variables: Record<string, unknown>): unknown {
+  if (path in variables) return variables[path];
+  if (!path.includes('.')) return variables[path];
+
+  let current: unknown = variables;
+  for (const segment of path.split('.')) {
+    if (current === null || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return current;
+}
+
 function evaluateRule(rule: ConditionRule, variables: Record<string, unknown>): boolean {
-  const left = toComparable(variables[rule.variable]);
+  const left = toComparable(resolveVariable(rule.variable, variables));
   const rawRight = rule.value ?? '';
   const right = toComparable(rawRight);
 

@@ -14,6 +14,7 @@ import { JsonPipe, Location, NgClass } from '@angular/common';
 import { WorkflowRunner }  from './workflow-runner';
 import type { WorkflowJSON } from './workflow-runner';
 import { MockAdapter }     from '@workflow-engine/adapter/MockAdapter';
+import { FormRunnerComponent } from './form-runner';
 
 // Mirrors SaveWorkflowMeta from react-flow-wrapper/src/components/SaveWorkflowModal.tsx —
 // the "Lưu quy trình" modal lives inside the widget; the host only receives the result.
@@ -62,7 +63,7 @@ export interface InstanceTestState {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgClass, JsonPipe],
+  imports: [RouterOutlet, NgClass, JsonPipe, FormRunnerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -95,6 +96,34 @@ export class App implements AfterViewInit, OnDestroy {
   protected testVariablesJson = signal('{}');
   protected testBusy = signal(false);
   protected testError = signal<string | null>(null);
+  protected testPanelCollapsed = signal(true);
+
+  protected toggleTestPanel(): void {
+    this.testPanelCollapsed.update(v => !v);
+  }
+
+  // ── Form runner — trang riêng để người dùng nhập biểu mẫu cho node "form" đang chờ ──
+  // (tách biệt khỏi panel debug "Test instance API"; điều hướng kiểu URL nhẹ giống /flow/:id,
+  // vì App không dùng <router-outlet>.)
+  protected formRunnerInstanceId = signal<string | null>(null);
+
+  protected openFormRunner(instanceId: string): void {
+    this.formRunnerInstanceId.set(instanceId);
+    this.location.go(`/instance/${instanceId}/form`);
+  }
+
+  protected closeFormRunner(): void {
+    this.formRunnerInstanceId.set(null);
+    if (this.currentWorkflowId) {
+      this.location.go(`/flow/${this.currentWorkflowId}`);
+    } else {
+      this.location.go('/');
+    }
+  }
+
+  protected onFormRunnerSubmitted(updatedInstance: unknown): void {
+    this.testInstance.set(updatedInstance as InstanceTestState);
+  }
 
   protected get currentWorkflowIdForTest(): string | null {
     return this.currentWorkflowId;
@@ -105,7 +134,12 @@ export class App implements AfterViewInit, OnDestroy {
   // Adapter cho toàn bộ app — thay DemoAdapter bằng adapter thật
   private adapter = new MockAdapter(); // ← đổi thành DemoAdapter() khi có backend thật
 
-  constructor(private zone: NgZone, private location: Location) {}
+  constructor(private zone: NgZone, private location: Location) {
+    const match = this.location.path().match(/^\/instance\/([^/]+)\/form$/);
+    if (match) {
+      this.formRunnerInstanceId.set(match[1]);
+    }
+  }
 
   private get supabaseHeaders(): Record<string, string> {
     return {
@@ -129,6 +163,27 @@ export class App implements AfterViewInit, OnDestroy {
     el.onRedo   = this.onRedo;
     el.onOpenWorkflowList = this.onOpenWorkflowList;
     el.onSelectWorkflow   = this.onSelectWorkflow;
+
+    // Mở thẳng URL "/flow/:id" (vd. tải lại trang, dán link) — location.go() chỉ đổi URL,
+    // không tự nạp gì lên canvas, nên ở đây phải tự fetch quy trình rồi yêu cầu widget nạp.
+    this.loadWorkflowFromUrlIfPresent(el);
+  }
+
+  private async loadWorkflowFromUrlIfPresent(el: any): Promise<void> {
+    const match = this.location.path().match(/^\/flow\/([^/]+)$/);
+    if (!match) return;
+
+    const id = match[1];
+    const result = await this.onSelectWorkflow(id);
+    if (!result) {
+      console.warn(`[App] Không tải được quy trình "${id}" từ URL`);
+      return;
+    }
+
+    // onSelectWorkflow() đã tự set currentWorkflowId + location.go('/flow/:id') ở trên.
+    el.dispatchEvent(new CustomEvent('requestLoadWorkflow', {
+      detail: { payload: result.payload, meta: result.meta },
+    }));
   }
 
   ngOnDestroy() {

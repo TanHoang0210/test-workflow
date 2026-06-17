@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -11,4 +12,6 @@ if (!url || !serviceKey) {
 
 export const supabase = createClient(url, serviceKey, {
   auth: { persistSession: false },
+  // Node.js < 22 has no native WebSocket — provide "ws" so the realtime client can init.
+  realtime: { transport: ws as unknown as typeof WebSocket },
 });

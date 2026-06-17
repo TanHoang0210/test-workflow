@@ -1,7 +1,9 @@
 import React from "react";
-import type { NodeFormData } from "../../workflow/types";
+import type { Edge, Node as FlowNode } from "reactflow";
+import type { NodeFormData, WorkflowNodeData } from "../../workflow/types";
 import type { NodeConfigFormProps } from "./nodeFormTypes";
 import { getOutgoingBranchTargets } from "../../workflow/graphUtils";
+import { NODE_TYPE_LABELS } from "../../workflow/constants";
 import { NodeFormShell } from "../NodeFormShell";
 import { ExtendedConfigEditor } from "../ExtendedConfigEditor";
 
@@ -67,6 +69,66 @@ function makeRule(): Rule {
   return { id: uid(), variable: "", operator: "equals", value: "" };
 }
 
+export type VariableOption = { value: string; label: string; group: string };
+
+// Walks the graph backwards from `nodeId` to find every node that can reach it
+// — these are the only nodes whose form fields will already hold a value by the
+// time this condition node runs.
+function getUpstreamNodeIds(nodeId: string, edges: Edge[]): Set<string> {
+  const incoming = new Map<string, string[]>();
+  for (const e of edges) {
+    const list = incoming.get(e.target) ?? [];
+    list.push(e.source);
+    incoming.set(e.target, list);
+  }
+  const seen = new Set<string>();
+  const queue = [...(incoming.get(nodeId) ?? [])];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    queue.push(...(incoming.get(id) ?? []));
+  }
+  return seen;
+}
+
+// Collects selectable variable references for the condition rule picker:
+//  - extended config properties of the current node (flat key lookup)
+//  - form fields from upstream "form" nodes, referenced as "<nodeId>.<fieldKey>"
+//    (matches the variables[nodeId] = { ...formValues } namespacing the runtime uses)
+function collectVariableOptions(
+  form: NodeFormData,
+  nodeId: string,
+  graphEdges: Edge[],
+  graphNodes: FlowNode<WorkflowNodeData>[],
+): VariableOption[] {
+  const options: VariableOption[] = [];
+  const seenValues = new Set<string>();
+  const add = (value: string, label: string, group: string) => {
+    if (!value || seenValues.has(value)) return;
+    seenValues.add(value);
+    options.push({ value, label, group });
+  };
+
+  for (const cp of form.configProperties ?? []) {
+    if (!cp.key || cp.key.startsWith("__")) continue;
+    add(cp.key, `${cp.displayName || cp.key} (${cp.key})`, "Cấu hình mở rộng của node này");
+  }
+
+  const upstreamIds = getUpstreamNodeIds(nodeId, graphEdges);
+  for (const n of graphNodes) {
+    if (n.data.nodeType !== "form" || !upstreamIds.has(n.id)) continue;
+    const nodeLabel = n.data.formData?.label || `${NODE_TYPE_LABELS[n.data.nodeType] ?? n.data.nodeType} (${n.id})`;
+    for (const f of n.data.formData?.fields ?? []) {
+      const fieldKey = f.key || f.label;
+      if (!fieldKey) continue;
+      add(`${n.id}.${fieldKey}`, `${nodeLabel} → ${f.label || fieldKey}`, "Biến từ biểu mẫu node trước");
+    }
+  }
+
+  return options;
+}
+
 function makeBranch(targetId?: string, name = "Nhánh mới", colorIdx = 0): Branch {
   return {
     id: uid(),
@@ -100,19 +162,28 @@ function loadBranches(form: NodeFormData, targets: { targetId: string; targetLab
 
 const RuleRow: React.FC<{
   rule: Rule;
+  variableOptions: VariableOption[];
   onChange: (patch: Partial<Rule>) => void;
   onDelete: () => void;
   canDelete: boolean;
-}> = ({ rule, onChange, onDelete, canDelete }) => {
+}> = ({ rule, variableOptions, onChange, onDelete, canDelete }) => {
   const op = OPERATORS.find((o) => o.value === rule.operator);
+  const datalistId = `cn-rule-vars-${rule.id}`;
+
   return (
     <div className="cn-rule">
       <input
         className="cn-rule__var"
+        list={datalistId}
         value={rule.variable}
         onChange={(e) => onChange({ variable: e.target.value })}
-        placeholder="{{biến}} hoặc field"
+        placeholder="Chọn biến hoặc nhập field"
       />
+      <datalist id={datalistId}>
+        {variableOptions.map((opt) => (
+          <option key={opt.value} value={opt.value}>{`${opt.group} — ${opt.label}`}</option>
+        ))}
+      </datalist>
       <select
         className="cn-rule__op"
         value={rule.operator}
@@ -143,10 +214,11 @@ const BranchCard: React.FC<{
   branch: Branch;
   index: number;
   total: number;
+  variableOptions: VariableOption[];
   onChange: (patch: Partial<Branch>) => void;
   onDelete: () => void;
   onMove: (dir: -1 | 1) => void;
-}> = ({ branch, index, total, onChange, onDelete, onMove }) => {
+}> = ({ branch, index, total, variableOptions, onChange, onDelete, onMove }) => {
   const updateRule = (ruleId: string, patch: Partial<Rule>) =>
     onChange({ rules: branch.rules.map((r) => r.id === ruleId ? { ...r, ...patch } : r) });
   const deleteRule = (ruleId: string) =>
@@ -218,6 +290,7 @@ const BranchCard: React.FC<{
                 )}
                 <RuleRow
                   rule={rule}
+                  variableOptions={variableOptions}
                   onChange={(patch) => updateRule(rule.id, patch)}
                   onDelete={() => deleteRule(rule.id)}
                   canDelete={branch.rules.length > 1}
@@ -273,6 +346,11 @@ export const ConditionNodeForm: React.FC<NodeConfigFormProps> = ({
   );
   const [configProps, setConfigProps] = React.useState(() =>
     (form.configProperties ?? []).filter((c) => c.key !== CONFIG_KEY && c.key !== "__elseDesc")
+  );
+
+  const variableOptions = React.useMemo(
+    () => collectVariableOptions({ ...form, configProperties: configProps }, nodeId, graphEdges, graphNodes),
+    [form, configProps, nodeId, graphEdges, graphNodes]
   );
 
   // timeout / logging / outputVar from config
@@ -352,6 +430,7 @@ export const ConditionNodeForm: React.FC<NodeConfigFormProps> = ({
             branch={branch}
             index={i}
             total={branches.length}
+            variableOptions={variableOptions}
             onChange={(patch) => updateBranch(branch.id, patch)}
             onDelete={() => deleteBranch(branch.id)}
             onMove={(dir) => moveBranch(branch.id, dir)}

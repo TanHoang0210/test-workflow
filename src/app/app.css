@@ -10,6 +10,13 @@
   height: 100vh;
 }
 
+/* Ẩn canvas builder khi form-runner đang mở — KHÔNG dùng @if/@else để giữ nguyên
+   <react-flow-builder> trong DOM, tránh việc React bên trong bị mount lại từ đầu
+   (mất state canvas + các listener gắn 1 lần trong ngAfterViewInit). */
+.flow-container--hidden {
+  display: none;
+}
+
 react-flow-builder {
   display: block;
   width: 100%;
@@ -131,10 +138,33 @@ react-flow-builder {
 .exec-log-entry--jump    { color: #cba6f7; }
 .exec-log-entry--handoff { color: #f9e2af; }
 
+.instance-test-fab {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #313244;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.instance-test-fab:hover {
+  background: #313244;
+}
+
 .instance-test-panel {
   position: fixed;
-  top: 12px;
-  right: 12px;
+  bottom: 16px;
+  right: 16px;
   z-index: 1000;
   width: 320px;
   max-height: 70vh;
@@ -146,6 +176,14 @@ react-flow-builder {
   border: 1px solid #313244;
   border-radius: 6px;
   padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.instance-test-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
 .instance-test-panel__title {
@@ -154,7 +192,21 @@ react-flow-builder {
   font-size: 11px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+}
+
+.instance-test-panel__collapse {
+  background: none;
+  border: 1px solid #45475a;
+  color: #a6adc8;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.instance-test-panel__collapse:hover {
+  background: #313244;
 }
 
 .instance-test-panel__row {
